@@ -89,7 +89,8 @@ class DataFetcher:
         self.one_hot = self.dataset.one_hot
 
         if self.dataset.presplit:
-            self._presplit_data(*self.dataset.load_data(cache_dir, force_download))
+            self._presplit_data(
+                *self.dataset.load_data(cache_dir, force_download))
         else:
             self._add_data(*self.dataset.load_data(cache_dir, force_download))
 
@@ -97,11 +98,14 @@ class DataFetcher:
 
     def _presplit_data(self, x_train, x_valid, x_test, y_train, y_valid, y_test):
         if not len(x_train) == len(y_train):
-            raise ValueError("Training Covariates and Labels must be of same length.")
+            raise ValueError(
+                "Training Covariates and Labels must be of same length.")
         if not len(x_valid) == len(y_valid):
-            raise ValueError("Validation Covariates and Labels must be of same length.")
+            raise ValueError(
+                "Validation Covariates and Labels must be of same length.")
         if not len(x_test) == len(y_test):
-            raise ValueError("Testing Covariates and Labels must be of same length.")
+            raise ValueError(
+                "Testing Covariates and Labels must be of same length.")
 
         if not (x_train[0].shape == x_valid[0].shape == x_test[0].shape):
             raise ValueError("Covariates must be of same shape.")
@@ -114,7 +118,8 @@ class DataFetcher:
         tr, val, test = len(self.x_train), len(self.x_valid), len(self.x_test)
         self.train_indices = np.fromiter(range(tr), dtype=int)
         self.valid_indices = np.fromiter(range(tr, tr + val), dtype=int)
-        self.test_indices = np.fromiter(range(tr + val, tr + val + test), dtype=int)
+        self.test_indices = np.fromiter(
+            range(tr + val, tr + val + test), dtype=int)
 
     def _add_data(self, covar, labels):
         if not len(covar) == len(labels):
@@ -136,7 +141,7 @@ class DataFetcher:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Optional[Callable[[Self, Any, ...], dict[str, Any]]] = None,
+        add_noise: Optional[Callable[[Self, Any], dict[str, Any]]] = None,
         noise_kwargs: Optional[dict[str, Any]] = None,
     ):
         """Create, split, and add noise to DataFetcher from input arguments."""
@@ -240,7 +245,8 @@ class DataFetcher:
             All labels must be of same dimension.
         """
         fetcher = cls.__new__(cls)
-        fetcher._presplit_data(x_train, x_valid, x_test, y_train, y_valid, y_test)
+        fetcher._presplit_data(x_train, x_valid, x_test,
+                               y_train, y_valid, y_test)
 
         fetcher.one_hot = one_hot
         fetcher.random_state = check_random_state(random_state)
@@ -265,13 +271,19 @@ class DataFetcher:
         if not isinstance(self.x_train, Dataset) and not isinstance(
             self.x_train, torch.Tensor
         ):  # Turns arrays -> cpu tensors
-            x_trn = torch.tensor(x_trn, dtype=torch.float).view(-1, *self.covar_dim)
-            x_val = torch.tensor(x_val, dtype=torch.float).view(-1, *self.covar_dim)
-            x_test = torch.tensor(x_test, dtype=torch.float).view(-1, *self.covar_dim)
+            x_trn = torch.tensor(
+                x_trn, dtype=torch.float).view(-1, *self.covar_dim)
+            x_val = torch.tensor(
+                x_val, dtype=torch.float).view(-1, *self.covar_dim)
+            x_test = torch.tensor(
+                x_test, dtype=torch.float).view(-1, *self.covar_dim)
 
-        y_trn = torch.tensor(self.y_train, dtype=torch.float).view(-1, *self.label_dim)
-        y_val = torch.tensor(self.y_valid, dtype=torch.float).view(-1, *self.label_dim)
-        y_test = torch.tensor(self.y_test, dtype=torch.float).view(-1, *self.label_dim)
+        y_trn = torch.tensor(
+            self.y_train, dtype=torch.float).view(-1, *self.label_dim)
+        y_val = torch.tensor(
+            self.y_valid, dtype=torch.float).view(-1, *self.label_dim)
+        y_test = torch.tensor(
+            self.y_test, dtype=torch.float).view(-1, *self.label_dim)
 
         return x_trn, y_trn, x_val, y_val, x_test, y_test
 
@@ -342,18 +354,21 @@ class DataFetcher:
             than 1 or the total splits are greater than the len(dataset)
         """
         if hasattr(self, "dataset") and self.dataset.presplit:
-            warnings.warn("Dataset is already presplit, no need to split data.")
+            warnings.warn(
+                "Dataset is already presplit, no need to split data.")
             return self
 
         if sum((train_count, valid_count, test_count)) > self.num_points:
             raise ValueError(
-                f"Split totals must be < {self.num_points=} and of the same type: "
+                f"""Split totals must be <{
+                    self.num_points} and of the same type: """
             )
         sp = list(accumulate((train_count, valid_count, test_count)))
 
         # Extra underscore to unpack any remainders
         idx = self.random_state.permutation(self.num_points)
-        self.train_indices, self.valid_indices, self.test_indices, _ = np.split(idx, sp)
+        self.train_indices, self.valid_indices, self.test_indices, _ = np.split(
+            idx, sp)
 
         if isinstance(self.covar, Dataset):
             self.x_train = Subset(self.covar, self.train_indices)
@@ -407,7 +422,8 @@ class DataFetcher:
         for index in idx:
             if not (0 <= index < len(self.covar)) or index in seen:
                 raise ValueError(
-                    f"{index=} is repeated or is out of range for {self.num_points=}"
+                    f"""{index=} is repeated or is out of range for {
+                        self.num_points=}"""
                 )
             seen.add(index)
 
@@ -432,7 +448,8 @@ class DataFetcher:
 
     def noisify(
         self,
-        add_noise: Union[Callable[[Self, Any, ...], dict[str, Any]], str, None] = None,
+        add_noise: Union[Callable[[Self, Any],
+                                  dict[str, Any]], str, None] = None,
         *noise_args,
         **noise_kwargs,
     ):
@@ -484,7 +501,8 @@ class DataFetcher:
         self.y_valid = noisy_data.get("y_valid", self.y_valid)
         self.x_test = noisy_data.get("x_test", self.x_test)
         self.y_test = noisy_data.get("y_test", self.y_test)
-        self.noisy_train_indices = noisy_data.get("noisy_train_indices", np.array([]))
+        self.noisy_train_indices = noisy_data.get(
+            "noisy_train_indices", np.array([]))
 
         return self
 
@@ -508,9 +526,12 @@ class DataFetcher:
         y_train, y_valid, y_test = self.y_train, self.y_valid, self.y_test
 
         if self.one_hot:
-            y_train = np.argmax(y_train, axis=1, keepdims=True) if y_train.size else []
-            y_valid = np.argmax(y_valid, axis=1, keepdims=True) if y_valid.size else []
-            y_test = np.argmax(y_test, axis=1, keepdims=True) if y_test.size else []
+            y_train = np.argmax(
+                y_train, axis=1, keepdims=True) if y_train.size else []
+            y_valid = np.argmax(
+                y_valid, axis=1, keepdims=True) if y_valid.size else []
+            y_test = np.argmax(
+                y_test, axis=1, keepdims=True) if y_test.size else []
 
         def generate_data(covariates, labels):
             data = CatDataset(covariates, labels)
@@ -530,7 +551,8 @@ class DataFetcher:
             if hasattr(self, "noisy_train_indices")
             else []
         )
-        out_path = output_directory / f"noisy-indices-{self.dataset.dataset_name}.json"
+        out_path = output_directory / \
+            f"noisy-indices-{self.dataset.dataset_name}.json"
         with open(out_path, "w+") as f:
             json.dump(noisy_indices, f)
 
