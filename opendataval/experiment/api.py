@@ -82,7 +82,8 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
+        add_noise: Union[Callable[[DataFetcher],
+                                  dict[str, Any]], str] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         pred_model: Optional[Model] = None,
@@ -125,7 +126,8 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
+        add_noise: Union[Callable[[DataFetcher],
+                                  dict[str, Any]], str] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         model_name: Optional[str] = None,
@@ -271,19 +273,13 @@ class ExperimentMediator:
                     f"""
                     An error occured during training, however training all evaluators
                     takes a long time, so we will be ignoring the evaluator:
-                    {data_val!s} and proceeding.
-
-                    The error is as follows: {ex!s}
-                    """,
-                    stacklevel=10,
-                )
-
-        self.num_data_eval = len(self.data_evaluators)
-        return self
-
+                    {data_val!s} and proceeding. The error is as follows: {ex!s} """)                
+            
+            self.num_data_eval = len(self.data_evaluators)                
+            return self 
     def evaluate(
         self,
-        exper_func: Callable[[DataEvaluator, DataFetcher, ...], dict[str, Any]],
+        exper_func: Callable[[DataEvaluator, DataFetcher, Any], dict[str, Any]],
         save_output: bool = False,
         **exper_kwargs,
     ) -> pd.DataFrame:
@@ -334,7 +330,7 @@ class ExperimentMediator:
 
     def plot(
         self,
-        exper_func: Callable[[DataEvaluator, DataFetcher, Axes, ...], dict[str, Any]],
+        exper_func: Callable[[DataEvaluator, DataFetcher, Axes], dict[str, Any]],
         figure: Optional[Figure] = None,
         row: Optional[int] = None,
         col: int = 2,
@@ -422,7 +418,8 @@ class ExperimentMediator:
             Output DataFrame from an experiment run by ExperimentMediator
         """
         if not hasattr(self, "output_directory"):
-            warnings.warn("Output directory not set, output has not been saved")
+            warnings.warn(
+                "Output directory not set, output has not been saved")
             return
 
         df.to_csv(self.output_directory / file_name)
