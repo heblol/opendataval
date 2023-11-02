@@ -162,7 +162,7 @@ def download_imdb_illuminating(cache_dir: str, force_download: bool):
 
     """
 
-    filepath = "data-imdb/hypo-llm-imdb-bert-original-dwb-gpt-generation-response-filtered-gpt-generation.csv"
+    filepath = "data_files/illuminating_blindspots/hypo-llm-imdb-bert-original-dwb-gpt-generation-response-filtered-gpt-generation.csv"
 
     df = pd.read_csv(filepath)
 
