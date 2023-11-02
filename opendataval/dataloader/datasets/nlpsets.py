@@ -46,7 +46,6 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         cache_dir = Path(cache_dir)
 
-        print("This is the function name", func)
         embed_file_name = f"{func.__name__}_{MAX_DATASET_SIZE}_embed.pt"
         embed_path = cache_dir / embed_file_name
 
