@@ -198,6 +198,8 @@ class ExperimentMediator:
         """
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
 
+        print("Adding noise?", add_noise is not None)
+
         fetcher = DataFetcher.setup(
             dataset_name=dataset_name,
             cache_dir=cache_dir,
@@ -251,6 +253,7 @@ class ExperimentMediator:
         kwargs = {**kwargs, **self.train_kwargs}
         for data_val in data_evaluators:
             try:
+                print(f"calculating datavalues for {data_val!s}")
                 start_time = time.perf_counter()
 
                 self.data_evaluators.append(
@@ -269,14 +272,18 @@ class ExperimentMediator:
                 if self.raise_error:
                     raise ex
 
-                warnings.warn(
-                    f"""
-                    An error occured during training, however training all evaluators
-                    takes a long time, so we will be ignoring the evaluator:
-                    {data_val!s} and proceeding. The error is as follows: {ex!s} """)                
-            
-            self.num_data_eval = len(self.data_evaluators)                
-            return self 
+                warnings.warm(f"""Skipping data evaluator {
+                              data_val} because of error: {ex!s}""")
+
+                # warnings.warn(
+                #     f"""
+                #     An error occured during training, however training all evaluators
+                #     takes a long time, so we will be ignoring the evaluator:
+                #     {data_val!s} and proceeding. The error is as follows: {ex!s}""")
+
+        self.num_data_eval = len(self.data_evaluators)
+        return self
+
     def evaluate(
         self,
         exper_func: Callable[[DataEvaluator, DataFetcher, Any], dict[str, Any]],

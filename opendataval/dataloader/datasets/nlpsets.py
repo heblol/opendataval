@@ -3,6 +3,7 @@
 Uses HuggingFace
 `transformers <https://huggingface.co/docs/transformers/index>`_. as dependency.
 """
+import os
 from pathlib import Path
 from typing import Callable
 
@@ -44,6 +45,8 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
         cache_dir = Path(cache_dir)
+
+        print("This is the function name", func)
         embed_file_name = f"{func.__name__}_{MAX_DATASET_SIZE}_embed.pt"
         embed_path = cache_dir / embed_file_name
 
@@ -66,8 +69,10 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
             else "cpu"
         )
 
-        tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
-        bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+        tokenizer = DistilBertTokenizerFast.from_pretrained(
+            BERT_PRETRAINED_NAME)
+        bert_model = DistilBertModel.from_pretrained(
+            BERT_PRETRAINED_NAME).to(device)
 
         res = tokenizer.__call__(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
@@ -75,8 +80,14 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         with torch.no_grad():
             pooled_embeddings = (
-                (bert_model(res.input_ids, res.attention_mask)[0]).detach().cpu()[:, 0]
+                (bert_model(res.input_ids, res.attention_mask)
+                 [0]).detach().cpu()[:, 0]
             )
+
+        if not os.path.exists(cache_dir):
+            print(f"""cache dir does not exist, creating it cache_dir={
+                  cache_dir} """)
+            os.mkdir(cache_dir)
 
         torch.save(pooled_embeddings.detach(), embed_path)
         return pooled_embeddings, np.array(labels)
@@ -110,7 +121,8 @@ def download_bbc(cache_dir: str, force_download: bool):
         "tech": 3,
         "politics": 4,
     }
-    labels = np.fromiter((label_dict[label] for label in df["category"]), dtype=int)
+    labels = np.fromiter((label_dict[label]
+                         for label in df["category"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
@@ -136,13 +148,41 @@ def download_imdb(cache_dir: str, force_download: bool):
     df = pd.read_csv(filepath)
 
     label_dict = {"negative": 0, "positive": 1}
-    labels = np.fromiter((label_dict[label] for label in df["sentiment"]), dtype=int)
+    labels = np.fromiter((label_dict[label]
+                         for label in df["sentiment"]), dtype=int)
 
     return ListDataset(df["review"].values), labels
 
 
-bbc_embedding = Register("bbc-embeddings", True, True)(BertEmbeddings(download_bbc))
+@Register("illuminating", cacheable=True, one_hot=True)
+def download_imdb_illuminating(cache_dir: str, force_download: bool):
+    """
+
+    Paper of Philip: Illuminating blindspots
+
+    """
+
+    filepath = "data-imdb/hypo-llm-imdb-bert-original-dwb-gpt-generation-response-filtered-gpt-generation.csv"
+
+    df = pd.read_csv(filepath)
+
+    print("This is the illuminating d", df)
+
+    label_dict = {0: 0, 1: 1}
+    labels = np.fromiter((label_dict[label]
+                         for label in df["label"]), dtype=int)
+
+    return ListDataset(df["text"].values), labels
+
+
+illuminating_embedding = Register(
+    "illuminating-embeddings", True, True)(BertEmbeddings(download_imdb_illuminating))
+"""Classification data set registered as ``"illuminating-embeddings"``, BERT text embeddings."""
+
+bbc_embedding = Register("bbc-embeddings", True,
+                         True)(BertEmbeddings(download_bbc))
 """Classification data set registered as ``"bbc-embeddings"``, BERT text embeddings."""
 
-imdb_embedding = Register("imdb-embeddings", True, True)(BertEmbeddings(download_imdb))
+imdb_embedding = Register("imdb-embeddings", True,
+                          True)(BertEmbeddings(download_imdb))
 """Classification data set registered as ``"imdb-embeddings"``, BERT text embeddings."""

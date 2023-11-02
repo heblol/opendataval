@@ -37,20 +37,38 @@ def mix_labels(fetcher: DataFetcher, noise_rate: float = 0.2) -> dict[str, np.nd
     y_train, y_valid = fetcher.y_train, fetcher.y_valid
     num_train, num_valid = len(y_train), len(y_valid)
 
-    train_replace = rs.choice(num_train, round(num_train * noise_rate), replace=False)
-    valid_replace = rs.choice(num_valid, round(num_valid * noise_rate), replace=False)
+    train_replace = rs.choice(num_train, round(
+        num_train * noise_rate), replace=False)
+    valid_replace = rs.choice(num_valid, round(
+        num_valid * noise_rate), replace=False)
 
     # Gets unique classes and mapping of training data set to those classes
-    train_classes, train_mapping = np.unique(y_train, return_inverse=True, axis=0)
-    valid_classes, valid_mapping = np.unique(y_valid, return_inverse=True, axis=0)
+    train_classes, train_mapping = np.unique(
+        y_train, return_inverse=True, axis=0)
+    valid_classes, valid_mapping = np.unique(
+        y_valid, return_inverse=True, axis=0)
+
+    print("Size is:", len(train_classes), len(valid_classes))
+
+    if (len(train_classes) - 1 <= 0):
+        raise Exception(
+            "Your training data only contains 1 class. This needs to be at minimum 2 classes.")
+
+    if (len(valid_classes) - 1 <= 0):
+        raise Exception(
+            "Your validation data only contains 1 class. This needs to be at minimum 2 classes.")
 
     # For each label, we determine a shift to pick a new label
     # The new label cannot be the same as the prior, therefore start at 1
-    train_shift = rs.choice(len(train_classes) - 1, round(num_train * noise_rate)) + 1
-    valid_shift = rs.choice(len(valid_classes) - 1, round(num_valid * noise_rate)) + 1
+    train_shift = rs.choice(len(train_classes) - 1,
+                            round(num_train * noise_rate)) + 1
+    valid_shift = rs.choice(len(valid_classes) - 1,
+                            round(num_valid * noise_rate)) + 1
 
-    train_noise = (train_mapping[train_replace] + train_shift) % len(train_classes)
-    valid_noise = (valid_mapping[valid_replace] + valid_shift) % len(valid_classes)
+    train_noise = (train_mapping[train_replace] +
+                   train_shift) % len(train_classes)
+    valid_noise = (valid_mapping[valid_replace] +
+                   valid_shift) % len(valid_classes)
 
     y_train[train_replace] = train_classes[train_noise]
     y_valid[valid_replace] = valid_classes[valid_noise]
@@ -93,16 +111,22 @@ def add_gauss_noise(
     num_train, num_valid = len(x_train), len(x_valid)
     feature_dim = fetcher.covar_dim
 
-    noisy_train_idx = rs.choice(num_train, round(num_train * noise_rate), replace=False)
-    noisy_valid_idx = rs.choice(num_valid, round(num_valid * noise_rate), replace=False)
-    noise_train = rs.normal(mu, sigma, size=(len(noisy_train_idx), *feature_dim))
-    noise_valid = rs.normal(mu, sigma, size=(len(noisy_valid_idx), *feature_dim))
+    noisy_train_idx = rs.choice(num_train, round(
+        num_train * noise_rate), replace=False)
+    noisy_valid_idx = rs.choice(num_valid, round(
+        num_valid * noise_rate), replace=False)
+    noise_train = rs.normal(mu, sigma, size=(
+        len(noisy_train_idx), *feature_dim))
+    noise_valid = rs.normal(mu, sigma, size=(
+        len(noisy_valid_idx), *feature_dim))
 
     if isinstance(x_train, Dataset):
         # We add a zero tensor at the top because noise only some indices have noise
         # added. For those that do not, they have the zero tensor added -> no change
-        padded_noise_train = np.vstack([np.zeros(shape=(1, *feature_dim)), noise_train])
-        padded_noise_valid = np.vstack([np.zeros(shape=(1, *feature_dim)), noise_valid])
+        padded_noise_train = np.vstack(
+            [np.zeros(shape=(1, *feature_dim)), noise_train])
+        padded_noise_valid = np.vstack(
+            [np.zeros(shape=(1, *feature_dim)), noise_valid])
         noise_add_train = torch.tensor(padded_noise_train, dtype=torch.float)
         noise_add_valid = torch.tensor(padded_noise_valid, dtype=torch.float)
 
@@ -114,10 +138,12 @@ def add_gauss_noise(
         remap_valid[noisy_valid_idx] = range(1, len(noisy_valid_idx) + 1)
 
         x_train = IndexTransformDataset(
-            x_train, lambda data, ind: (data + noise_add_train[remap_train[ind]])
+            x_train, lambda data, ind: (
+                data + noise_add_train[remap_train[ind]])
         )
         x_valid = IndexTransformDataset(
-            x_valid, lambda data, ind: (data + noise_add_valid[remap_valid[ind]])
+            x_valid, lambda data, ind: (
+                data + noise_add_valid[remap_valid[ind]])
         )
     else:
         x_train[noisy_train_idx] = x_train[noisy_train_idx] + noise_train

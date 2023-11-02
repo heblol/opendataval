@@ -123,7 +123,8 @@ class DataFetcher:
 
     def _add_data(self, covar, labels):
         if not len(covar) == len(labels):
-            raise ValueError("Covariates and Labels must be of same length.")
+            raise ValueError(f"""Covariates and Labels must be of same length. covar={
+                             len(covar)} labels={len(labels)}""")
         self.covar, self.labels = covar, labels
 
     @staticmethod
