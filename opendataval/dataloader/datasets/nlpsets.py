@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
+import warnings
 import numpy as np
 import pandas as pd
 import torch
@@ -14,7 +15,7 @@ import torch
 from opendataval.dataloader.register import Register, cache
 from opendataval.dataloader.util import ListDataset
 
-MAX_DATASET_SIZE = 2000
+MAX_DATASET_SIZE = 20000
 """Data Valuation algorithms can take a long time for large data sets, thus cap size."""
 
 
@@ -46,18 +47,24 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         cache_dir = Path(cache_dir)
 
-        embed_file_name = f"{func.__name__}_{MAX_DATASET_SIZE}_embed.pt"
-        embed_path = cache_dir / embed_file_name
-
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
         subset = np.random.RandomState(10).permutation(len(dataset))
+
+        dataset_size = min(len(labels), MAX_DATASET_SIZE)
+
+        if (len(labels) > MAX_DATASET_SIZE):
+            warnings.warn(f"""Dataset size is larger than {
+                          MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE""")
+
+        embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
+        embed_path = cache_dir / embed_file_name
 
         if embed_path.exists():
             nlp_embeddings = torch.load(embed_path)
             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
 
-        labels = labels[subset[:MAX_DATASET_SIZE]]
-        entries = [entry for entry in dataset[subset[:MAX_DATASET_SIZE]]]
+        labels = labels[subset[:dataset_size]]
+        entries = [entry for entry in dataset[subset[:dataset_size]]]
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
         device = torch.device(
@@ -161,7 +168,7 @@ def download_imdb_illuminating(cache_dir: str, force_download: bool):
 
     """
 
-    filepath = "data_files/illuminating_blindspots/hypo-llm-imdb-bert-original-dwb-gpt-generation-response-filtered-gpt-generation.csv"
+    filepath = "opendataval/data_files/illuminating_blindspots/hypo-llm-imdb-bert-original-dwb-gpt-generation-response-filtered-gpt-generation.csv"
 
     df = pd.read_csv(filepath)
 
@@ -173,6 +180,56 @@ def download_imdb_illuminating(cache_dir: str, force_download: bool):
 
     return ListDataset(df["text"].values), labels
 
+
+@Register("illuminating-original-synthetic-combined", cacheable=True, one_hot=True)
+def download_imdb_illuminating_original_synthetic_combined(cache_dir: str, force_download: bool):
+    """
+
+    Paper of Philip: Illuminating blindspots
+
+    """
+
+    filepath = "opendataval/data_files/illuminating_blindspots/original_synthetic_combined.csv"
+
+    df = pd.read_csv(filepath)
+
+    print("dataset head: ", df.head() df.shape)
+
+    label_dict = {0: 0, 1: 1}
+    labels = np.fromiter((label_dict[label]
+                         for label in df["label"]), dtype=int)
+
+    return ListDataset(df["text"].values), labels
+
+
+@Register("illuminating-original-synthetic-combined_2000", cacheable=True, one_hot=True)
+def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, force_download: bool):
+    """
+
+    Paper of Philip: Illuminating blindspots
+
+    """
+
+    filepath = "opendataval/data_files/illuminating_blindspots/original_synthetic_combined_2000.csv"
+
+    df = pd.read_csv(filepath)
+
+    print("dataset head: ", df.head())
+
+    label_dict = {0: 0, 1: 1}
+    labels = np.fromiter((label_dict[label]
+                         for label in df["label"]), dtype=int)
+
+    return ListDataset(df["text"].values), labels
+
+
+illuminating_original_synthetic_combined_embedding = Register(
+    "illuminating_original_synthetic_combined_embeddings", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined))
+"""Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings"``, BERT text embeddings."""
+
+illuminating_original_synthetic_combined_embeddings_2000 = Register(
+    "illuminating_original_synthetic_combined_embeddings_2000", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000))
+"""Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings_2000"``, BERT text embeddings."""
 
 illuminating_embedding = Register(
     "illuminating-embeddings", True, True)(BertEmbeddings(download_imdb_illuminating))

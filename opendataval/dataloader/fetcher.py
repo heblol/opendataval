@@ -92,6 +92,9 @@ class DataFetcher:
             self._presplit_data(
                 *self.dataset.load_data(cache_dir, force_download))
         else:
+            print("Init _add_data", {
+                'dataset_name': dataset_name,
+            })
             self._add_data(*self.dataset.load_data(cache_dir, force_download))
 
         self.random_state = check_random_state(random_state)
@@ -125,6 +128,7 @@ class DataFetcher:
         if not len(covar) == len(labels):
             raise ValueError(f"""Covariates and Labels must be of same length. covar={
                              len(covar)} labels={len(labels)}""")
+        print("Adding covar", len(covar), len(labels))
         self.covar, self.labels = covar, labels
 
     @staticmethod
@@ -150,6 +154,11 @@ class DataFetcher:
 
         split_types = (type(train_count), type(valid_count), type(test_count))
         if split_types == (int, int, int):
+            print("This is the dataset split", {
+                "train_count": train_count,
+                "valid_count": valid_count,
+                "test_count": test_count,
+            })
             return (
                 cls(dataset_name, cache_dir, force_download, random_state)
                 .split_dataset_by_count(train_count, valid_count, test_count)
@@ -196,6 +205,7 @@ class DataFetcher:
             Input covariates and labels are of different length, no 1-to-1 mapping.
         """
         fetcher = cls.__new__(cls)
+        print("from_data was calledd", len(labels))
         fetcher._add_data(covar, labels)
 
         fetcher.one_hot = one_hot
@@ -310,8 +320,14 @@ class DataFetcher:
     def num_points(self) -> int:
         """Get total number of data points."""
         if hasattr(self, "covar"):
+            print("returning covar", self.covar)
             return len(self.covar)
         else:
+            print("Inside split", {
+                "x_train": len(self.x_train),
+                "x_valid": len(self.x_valid),
+                "x_test": len(self.x_test),
+            })
             return len(self.x_train) + len(self.x_valid) + len(self.x_test)
 
     def split_dataset_by_prop(
@@ -358,7 +374,12 @@ class DataFetcher:
             warnings.warn(
                 "Dataset is already presplit, no need to split data.")
             return self
-
+        print("this is the dataset split", {
+            "train_count": train_count,
+            "valid_count": valid_count,
+            "test_count": test_count,
+            "num_points_in_class": self.num_points,
+        })
         if sum((train_count, valid_count, test_count)) > self.num_points:
             raise ValueError(
                 f"""Split totals must be <{
