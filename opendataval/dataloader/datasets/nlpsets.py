@@ -193,7 +193,7 @@ def download_imdb_illuminating_original_synthetic_combined(cache_dir: str, force
 
     df = pd.read_csv(filepath)
 
-    print("dataset head: ", df.head() df.shape)
+    print("dataset head: ", df.head(), df.shape)
 
     label_dict = {0: 0, 1: 1}
     labels = np.fromiter((label_dict[label]
@@ -206,7 +206,7 @@ def download_imdb_illuminating_original_synthetic_combined(cache_dir: str, force
 def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, force_download: bool):
     """
 
-    Paper of Philip: Illuminating blindspots
+    Paper of Philip: Illuminating blind spots
 
     """
 
@@ -221,6 +221,32 @@ def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, 
                          for label in df["label"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
+
+
+@Register("illuminating-original-synthetic-combined_2000_v2", cacheable=False, one_hot=True)
+def download_imdb_illuminating_original_synthetic_combined_2000_v2(cache_dir: str = None, force_download: bool = True):
+    """
+
+    Paper of Philip: Illuminating blind spots
+
+    """
+
+    filepath = "opendataval/data_files/illuminating_blindspots/original_synthetic_combined_2000.csv"
+
+    df = pd.read_csv(filepath)
+
+    print("dataset head: ", df.head())
+
+    label_dict = {0: 0, 1: 1}
+    labels = np.fromiter((label_dict[label]
+                         for label in df["label"]), dtype=int)
+
+    return ListDataset(df["text"].values), labels
+
+
+illuminating_original_synthetic_combined_embeddings_2000_v2_bert = Register(
+    "illuminating_original_synthetic_combined_embeddings_2000_v2_bert", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000_v2))
+"""Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings_2000_v2"``, BERT text embeddings."""
 
 
 illuminating_original_synthetic_combined_embedding = Register(

@@ -180,6 +180,8 @@ class DVRL(DataEvaluator, ModelMixin):
         data = CatDataset(self.x_train, self.y_train, self.y_pred_diff)
         rs = RandomSampler(data, True, self.rl_epochs *
                            batch_size, generator=cpu_gen)
+
+        print("I am using the dataloader here!")
         dataloader = DataLoader(
             data,
             batch_size,

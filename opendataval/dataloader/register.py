@@ -10,7 +10,8 @@ import requests
 import tqdm
 from torch.utils.data import Dataset
 
-DatasetFunc = Callable[..., Union[Dataset, np.ndarray, tuple[np.ndarray, np.ndarray]]]
+DatasetFunc = Callable[..., Union[Dataset,
+                                  np.ndarray, tuple[np.ndarray, np.ndarray]]]
 Self = TypeVar("Self", bound="Register")
 
 
@@ -142,7 +143,8 @@ class Register:
         presplit: bool = False,
     ):
         if dataset_name in Register.Datasets:
-            warnings.warn(f"{dataset_name} has been registered, names must be unique")
+            warnings.warn(
+                f"Overriding {dataset_name}, because {dataset_name} was already registered, names must be unique.")
 
         self.dataset_name = dataset_name
         self.one_hot = one_hot
@@ -236,7 +238,8 @@ class Register:
         dataset_kwargs = {}
 
         if self.cacheable:
-            cache_dir = Path(cache_dir if cache_dir is not None else Register.CACHE_DIR)
+            cache_dir = Path(
+                cache_dir if cache_dir is not None else Register.CACHE_DIR)
             cache_dir.mkdir(parents=True, exist_ok=True)
 
             full_path = cache_dir / self.dataset_name
@@ -258,7 +261,8 @@ class Register:
                 for cov in covar_tup:
                     cov.transform = self.covar_transform
             else:
-                covar_tup = tuple(self.covar_transform(cov) for cov in covar_tup)
+                covar_tup = tuple(self.covar_transform(cov)
+                                  for cov in covar_tup)
 
         if self.label_transform:
             label_tup = tuple(self.label_transform(lab) for lab in label_tup)

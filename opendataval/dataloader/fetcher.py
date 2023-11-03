@@ -99,6 +99,9 @@ class DataFetcher:
 
         self.random_state = check_random_state(random_state)
 
+    def __getitem__(self, index: int):
+        return self.x_train[index], self.y_train[index]
+
     def _presplit_data(self, x_train, x_valid, x_test, y_train, y_valid, y_test):
         if not len(x_train) == len(y_train):
             raise ValueError(
@@ -557,6 +560,9 @@ class DataFetcher:
 
         def generate_data(covariates, labels):
             data = CatDataset(covariates, labels)
+            print("GENERATEING NEW CATDATASET")
+            print("labels + covarate",
+                  {"labels": labels, "covariates": covariates})
             for cov, lab in DataLoader(data, batch_size=1, shuffle=False):
                 yield from np.hstack((cov, lab))
 
