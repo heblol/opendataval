@@ -43,6 +43,10 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
     ) -> tuple[torch.Tensor, np.ndarray]:
         from transformers import DistilBertModel, DistilBertTokenizerFast
 
+        print("-"*30)
+        print("Calling BertEmbeddings wrapper. This can take a while, especially with large datasets.")
+        print("-"*30)
+
         BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
         cache_dir = Path(cache_dir)
@@ -52,10 +56,12 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         dataset_size = min(len(labels), MAX_DATASET_SIZE)
 
+
         if (len(labels) > MAX_DATASET_SIZE):
             warnings.warn(f"""Dataset size is larger than {
                           MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE""")
 
+        
         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
         embed_path = cache_dir / embed_file_name
 
@@ -90,6 +96,10 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
                  [0]).detach().cpu()[:, 0]
             )
 
+        print("-"*30)
+        print("Finished BertEmbeddings")
+        print("-"*30)
+
         if not os.path.exists(cache_dir):
             print(f"""cache dir does not exist, creating it cache_dir={
                   cache_dir} """)
@@ -97,6 +107,8 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         torch.save(pooled_embeddings.detach(), embed_path)
         return pooled_embeddings, np.array(labels)
+    
+    
 
     return wrapper
 
@@ -219,11 +231,13 @@ def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, 
     label_dict = {0: 0, 1: 1}
     labels = np.fromiter((label_dict[label]
                          for label in df["label"]), dtype=int)
+    
+    
 
     return ListDataset(df["text"].values), labels
 
 
-@Register("illuminating-original-synthetic-combined_2000_v2", cacheable=False, one_hot=True)
+@Register("download_imdb_illuminating_original_synthetic_combined_2000_v2", cacheable=False, one_hot=True)
 def download_imdb_illuminating_original_synthetic_combined_2000_v2(cache_dir: str = None, force_download: bool = True):
     """
 

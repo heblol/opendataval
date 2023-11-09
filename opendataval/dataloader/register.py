@@ -6,6 +6,7 @@ from typing import Callable, ClassVar, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import pandas as pd
+from pyparsing import Any
 import requests
 import tqdm
 from torch.utils.data import Dataset
@@ -236,6 +237,9 @@ class Register:
             Transformed covariates and labels of the data set
         """
         dataset_kwargs = {}
+        original_dataset = None
+
+        print("Now loading the data 'load_data'")
 
         if self.cacheable:
             cache_dir = Path(
@@ -247,8 +251,24 @@ class Register:
             dataset_kwargs["force_download"] = force_download
 
         if hasattr(self, "covar_label_func"):
-            covar, label = self.covar_label_func(**dataset_kwargs)
+
+            result = self.covar_label_func(
+                **dataset_kwargs)
+
+            print("THIS IS THE RESULKT", result)
+
+            if len(result) == 3:
+                # Iff the dataset creation returns additional information, this is the full original dataset.
+                covar: np.ndarray
+                label: np.ndarray
+                original_dataset: Any = result
+                print("This is the original dataset", original_dataset)
+            else:
+                covar, label = result
+                print("Only returned two objects", result)
+
         else:
+            print('No "covar_label_func" function ')
             covar = self.cov_func(**dataset_kwargs)
             label = self.label_func(**dataset_kwargs)
 
@@ -267,4 +287,4 @@ class Register:
         if self.label_transform:
             label_tup = tuple(self.label_transform(lab) for lab in label_tup)
 
-        return *covar_tup, *label_tup
+        return *covar_tup, *label_tup, original_dataset

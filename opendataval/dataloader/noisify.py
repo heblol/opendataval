@@ -44,9 +44,6 @@ def mix_labels(fetcher: DataFetcher, noise_rate: float = 0.2) -> dict[str, np.nd
 
     # Gets unique classes and mapping of training data set to those classes
 
-    print("y_train is:", y_train)
-    print("y_valid is:", y_valid)
-
     train_classes, train_mapping = np.unique(
         y_train, return_inverse=True, axis=0)
     valid_classes, valid_mapping = np.unique(

@@ -196,6 +196,7 @@ class ExperimentMediator:
         ExperimentMediator
             ExperimentMediator created from ModelFactory defaults
         """
+        print("Inside the ExperimentMediator")
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
 
         print("Adding noise?", add_noise is not None)

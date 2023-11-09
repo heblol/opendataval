@@ -127,12 +127,12 @@ class DataFetcher:
         self.test_indices = np.fromiter(
             range(tr + val, tr + val + test), dtype=int)
 
-    def _add_data(self, covar, labels):
+    def _add_data(self, covar, labels, original_data=None):
         if not len(covar) == len(labels):
             raise ValueError(f"""Covariates and Labels must be of same length. covar={
                              len(covar)} labels={len(labels)}""")
         print("Adding covar", len(covar), len(labels))
-        self.covar, self.labels = covar, labels
+        self.covar, self.labels, self.original_data = covar, labels, original_data
 
     @staticmethod
     def datasets_available() -> set[str]:
@@ -323,7 +323,6 @@ class DataFetcher:
     def num_points(self) -> int:
         """Get total number of data points."""
         if hasattr(self, "covar"):
-            print("returning covar", self.covar)
             return len(self.covar)
         else:
             print("Inside split", {
@@ -384,9 +383,11 @@ class DataFetcher:
             "num_points_in_class": self.num_points,
         })
         if sum((train_count, valid_count, test_count)) > self.num_points:
+
+            print("the sum is ", sum((train_count, valid_count, test_count), "numpoints=", self.num_points))
             raise ValueError(
                 f"""Split totals must be <{
-                    self.num_points} and of the same type: """
+                    self.num_points}, but is {sum((train_count, valid_count, test_count))} and of the same type: """
             )
         sp = list(accumulate((train_count, valid_count, test_count)))
 
@@ -394,6 +395,12 @@ class DataFetcher:
         idx = self.random_state.permutation(self.num_points)
         self.train_indices, self.valid_indices, self.test_indices, _ = np.split(
             idx, sp)
+
+        print("These are the indices to create a split", {
+            "train_indices": self.train_indices,
+            "valid_indices": self.valid_indices,
+            "test_indices": self.test_indices,
+        })
 
         if isinstance(self.covar, Dataset):
             self.x_train = Subset(self.covar, self.train_indices)

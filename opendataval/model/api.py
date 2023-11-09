@@ -137,7 +137,7 @@ class TorchClassMixin(TorchModel):
         for _ in range(int(epochs)):
             # *weights helps check if we passed weights into the Dataloader
             for x_batch, y_batch, *weights in DataLoader(
-                dataset, batch_size, shuffle=True, pin_memory=True
+                dataset, batch_size, shuffle=False, pin_memory=True
             ):
                 # Moves data to correct device
                 x_batch = x_batch.to(device=self.device)
@@ -201,7 +201,7 @@ class TorchRegressMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset,
                 batch_size,
-                shuffle=True,
+                shuffle=False,
                 pin_memory=True,
             ):
                 # Moves data to correct device
@@ -309,11 +309,13 @@ class ClassifierSkLearnWrapper(Model):
         num_samples = len(dataset)
 
         if num_samples == 0:
-            self.model = DummyClassifier(strategy="constant", constant=0).fit([0], [0])
+            self.model = DummyClassifier(
+                strategy="constant", constant=0).fit([0], [0])
             self.model.n_classes_ = self.num_classes
             return self
 
-        dataloader = DataLoader(dataset, batch_size=num_samples, collate_fn=to_numpy)
+        dataloader = DataLoader(
+            dataset, batch_size=num_samples, collate_fn=to_numpy)
         # *weights helps check if we passed weights into the Dataloader
         x_train, y_train, *weights = next(iter(dataloader))
         y_train = np.argmax(y_train, axis=1)
@@ -324,13 +326,16 @@ class ClassifierSkLearnWrapper(Model):
 
             if len(y_train_unique) != self.num_classes:  # All labels must be in sample
                 dummy_strat = "most_frequent"
-                self.model = DummyClassifier(strategy=dummy_strat).fit(x_train, y_train)
+                self.model = DummyClassifier(
+                    strategy=dummy_strat).fit(x_train, y_train)
                 self.model.n_classes_ = self.num_classes
             elif sample_weight is not None:
                 weights = np.squeeze(weights[0])
-                self.model.fit(x_train, y_train, *args, sample_weight=weights, **kwargs)
+                self.model.fit(x_train, y_train, *args,
+                               sample_weight=weights, **kwargs)
             else:
-                self.model.fit(x_train, y_train, *args, sample_weight=None, **kwargs)
+                self.model.fit(x_train, y_train, *args,
+                               sample_weight=None, **kwargs)
 
         return self
 
@@ -409,11 +414,13 @@ class ClassifierUnweightedSkLearnWrapper(ClassifierSkLearnWrapper):
         dataset = CatDataset(x_train, y_train, sample_weight)
 
         if num_samples == 0:
-            self.model = DummyClassifier(strategy="constant", constant=0).fit([0], [0])
+            self.model = DummyClassifier(
+                strategy="constant", constant=0).fit([0], [0])
             self.model.n_classes_ = self.num_classes
             return self
 
-        dataloader = DataLoader(dataset, batch_size=num_samples, collate_fn=to_numpy)
+        dataloader = DataLoader(
+            dataset, batch_size=num_samples, collate_fn=to_numpy)
         # *weights helps check if we passed weights into the Dataloader
         x_train, y_train, *weights = next(iter(dataloader))
         y_train = np.argmax(y_train, axis=1)
@@ -424,7 +431,8 @@ class ClassifierUnweightedSkLearnWrapper(ClassifierSkLearnWrapper):
 
             if len(y_train_unique) != self.num_classes:  # All labels must be in sample
                 dummy_strat = "most_frequent"
-                self.model = DummyClassifier(strategy=dummy_strat).fit(x_train, y_train)
+                self.model = DummyClassifier(
+                    strategy=dummy_strat).fit(x_train, y_train)
                 self.model.n_classes_ = self.num_classes
             elif sample_weight is not None:
                 indices = np.random.choice(  # Random sample of the train data set
@@ -433,7 +441,8 @@ class ClassifierUnweightedSkLearnWrapper(ClassifierSkLearnWrapper):
                     replace=True,
                     p=weights[0].squeeze() / weights[0].sum(),
                 )
-                self.model.fit(x_train[indices], y_train[indices], *args, **kwargs)
+                self.model.fit(x_train[indices],
+                               y_train[indices], *args, **kwargs)
             else:
                 self.model.fit(x_train, y_train, *args, **kwargs)
 
@@ -492,10 +501,12 @@ class RegressionSkLearnWrapper(Model):
 
         if num_samples == 0:
             constant_return = np.zeros(shape=(1, self.num_classes))
-            self.model = DummyRegressor(strategy="mean").fit([[0]], constant_return)
+            self.model = DummyRegressor(
+                strategy="mean").fit([[0]], constant_return)
             return self
 
-        dataloader = DataLoader(dataset, batch_size=num_samples, collate_fn=to_numpy)
+        dataloader = DataLoader(
+            dataset, batch_size=num_samples, collate_fn=to_numpy)
         # *weights helps check if we passed weights into the Dataloader
         x_train, y_train, *weights = next(iter(dataloader))
 
@@ -504,9 +515,11 @@ class RegressionSkLearnWrapper(Model):
 
             if sample_weight is not None:
                 weights = np.squeeze(weights[0])
-                self.model.fit(x_train, y_train, *args, sample_weight=weights, **kwargs)
+                self.model.fit(x_train, y_train, *args,
+                               sample_weight=weights, **kwargs)
             else:
-                self.model.fit(x_train, y_train, *args, sample_weight=None, **kwargs)
+                self.model.fit(x_train, y_train, *args,
+                               sample_weight=None, **kwargs)
 
         return self
 
