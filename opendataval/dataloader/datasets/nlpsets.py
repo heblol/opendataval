@@ -52,23 +52,36 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         cache_dir = Path(cache_dir)
 
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
+
+        print("-"*30)
+        print("imported raw dataset")
+
         subset = np.random.RandomState(10).permutation(len(dataset))
 
+        print("-"*30)
+        print("creating subsets")
+
         dataset_size = min(len(labels), MAX_DATASET_SIZE)
+        
 
 
         if (len(labels) > MAX_DATASET_SIZE):
             warnings.warn(f"""Dataset size is larger than {
                           MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE""")
+            
+        print("-"*30)
+        print("checking max size: ok")
 
         
         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
         embed_path = cache_dir / embed_file_name
 
         if embed_path.exists():
+            print("Embedding path DOES exist.")
             nlp_embeddings = torch.load(embed_path)
             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
 
+        print("Embedding path does NOT exist.")
         labels = labels[subset[:dataset_size]]
         entries = [entry for entry in dataset[subset[:dataset_size]]]
 
@@ -81,15 +94,23 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
             else "cpu"
         )
 
+        print("Just before creating tokenizer ")
         tokenizer = DistilBertTokenizerFast.from_pretrained(
             BERT_PRETRAINED_NAME)
+        
+        print("Creating bert from_pretrained")
         bert_model = DistilBertModel.from_pretrained(
             BERT_PRETRAINED_NAME).to(device)
 
+        print("-"*10)
+        print("Calling tokenizer")
+        print("-"*10)
         res = tokenizer.__call__(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         ).to(device)
-
+        print("-"*10)
+        print("Called tokenizer, and got a result")
+        print("-"*10)
         with torch.no_grad():
             pooled_embeddings = (
                 (bert_model(res.input_ids, res.attention_mask)
