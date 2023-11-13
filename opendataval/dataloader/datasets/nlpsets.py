@@ -3,6 +3,7 @@
 Uses HuggingFace
 `transformers <https://huggingface.co/docs/transformers/index>`_. as dependency.
 """
+from multiprocessing import pool
 import os
 from pathlib import Path
 from typing import Callable
@@ -11,7 +12,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
-
+from torch.utils.data import DataLoader
 from opendataval.dataloader.register import Register, cache
 from opendataval.dataloader.util import ListDataset
 
@@ -43,9 +44,11 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
     ) -> tuple[torch.Tensor, np.ndarray]:
         from transformers import DistilBertModel, DistilBertTokenizerFast
 
-        print("-"*30)
-        print("Calling BertEmbeddings wrapper. This can take a while, especially with large datasets.")
-        print("-"*30)
+        print("-" * 30)
+        print(
+            "Calling BertEmbeddings wrapper. This can take a while, especially with large datasets."
+        )
+        print("-" * 30)
 
         BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
@@ -53,26 +56,25 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
-        print("-"*30)
+        print("-" * 30)
         print("imported raw dataset")
 
         subset = np.random.RandomState(10).permutation(len(dataset))
 
-        print("-"*30)
+        print("-" * 30)
         print("creating subsets")
 
         dataset_size = min(len(labels), MAX_DATASET_SIZE)
-        
 
+        if len(labels) > MAX_DATASET_SIZE:
+            warnings.warn(
+                f"""Dataset size is larger than {
+                          MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE"""
+            )
 
-        if (len(labels) > MAX_DATASET_SIZE):
-            warnings.warn(f"""Dataset size is larger than {
-                          MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE""")
-            
-        print("-"*30)
+        print("-" * 30)
         print("checking max size: ok")
 
-        
         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
         embed_path = cache_dir / embed_file_name
 
@@ -95,43 +97,130 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         )
 
         print("Just before creating tokenizer ")
-        tokenizer = DistilBertTokenizerFast.from_pretrained(
-            BERT_PRETRAINED_NAME)
-        
-        print("Creating bert from_pretrained")
-        bert_model = DistilBertModel.from_pretrained(
-            BERT_PRETRAINED_NAME).to(device)
+        tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
 
-        print("-"*10)
+        print("Creating bert from_pretrained")
+        bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+
+        print("-" * 10)
         print("Calling tokenizer")
-        print("-"*10)
+        print("-" * 10)
         res = tokenizer.__call__(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         ).to(device)
-        print("-"*10)
+        print("-" * 10)
         print("Called tokenizer, and got a result")
-        print("-"*10)
-        with torch.no_grad():
-            pooled_embeddings = (
-                (bert_model(res.input_ids, res.attention_mask)
-                 [0]).detach().cpu()[:, 0]
-            )
+        print("-" * 10)
 
-        print("-"*30)
+        ########################################
+        # This was the original code
+        ########################################
+
+        # with torch.no_grad():
+        #     pooled_embeddings = (
+        #         (bert_model(res.input_ids, res.attention_mask)
+        #          [0]).detach().cpu()[:, 0]
+        #     )
+
+        ########################################
+        # This was the original code
+        ########################################
+
+        ######################################
+        # Trying to batch data
+        ######################################
+
+        # Dont batch, that shuffles the data
+
+        print("-" * 10)
+        print("Calling tokenizer")
+        tokenized_data = tokenizer(
+            entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
+        )
+
+        print("-" * 10)
+        print("Called tokenizer, and got a result")
+        dataset = torch.utils.data.TensorDataset(
+            tokenized_data.input_ids, tokenized_data.attention_mask
+        )
+
+        print("now creating dataloader")
+        dataloader = DataLoader(dataset, batch_size=8, shuffle=False)
+        print("-" * 10)
+        print("this is the dataset head, check if its shuffeld")
+        # Printing the first 20 elements of the dataset tensor
+        print(dataset[:20])
+
+        # Initialize an empty list to store pooled embeddings
+        pooled_embeddings_list = []
+
+        # Process data in batches
+        with torch.no_grad():
+            for batch in dataloader:
+                print("-" * 10)
+                print("batch", batch)
+                batch_input_ids, batch_attention_mask = batch
+                batch_input_ids, batch_attention_mask = batch_input_ids.to(
+                    device
+                ), batch_attention_mask.to(device)
+
+                # Get pooled embeddings for the batch
+                batch_pooled_embeddings = (
+                    bert_model(batch_input_ids, batch_attention_mask)[0]
+                    .detach()
+                    .cpu()[:, 0]
+                )
+
+                # Append batch_pooled_embeddings to the list
+                pooled_embeddings_list.append(batch_pooled_embeddings)
+                print("pool_embeddings_list:", pooled_embeddings_list)
+
+        # Concatenate the pooled embeddings from all batches
+        pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
+
+        #######################################
+        # End of trying to batch data
+        #######################################
+
+        print("-" * 30)
         print("Finished BertEmbeddings")
-        print("-"*30)
+        print("-" * 30)
 
         if not os.path.exists(cache_dir):
-            print(f"""cache dir does not exist, creating it cache_dir={
-                  cache_dir} """)
+            print(
+                f"""cache dir does not exist, creating it cache_dir={
+                  cache_dir} """
+            )
             os.mkdir(cache_dir)
 
         torch.save(pooled_embeddings.detach(), embed_path)
         return pooled_embeddings, np.array(labels)
-    
-    
 
     return wrapper
+
+
+# def pooled_embeddings_batched(
+#     bert_model: DistilBertModel, input_ids, attention_mask, tokenizer
+# ):
+#     batch_size = 8
+#     # Tokenize and create DataLoader
+#     tokenized_data = tokenizer(
+#         entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
+#     )
+#     dataset = torch.utils.data.TensorDataset(
+#         tokenized_data.input_ids, tokenized_data.attention_mask
+#     )
+#     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+#     # Initialize an empty list to store pooled embeddings
+#     pooled_embeddings_list = []
+
+#     with torch.no_grad():
+#         pooled_embeddings = (
+#             (bert_model(input_ids, attention_mask)[0]).detach().cpu()[:, 0]
+#         )
+
+#     return pooled_embeddings
 
 
 @Register("bbc", cacheable=True, one_hot=True)
@@ -160,8 +249,7 @@ def download_bbc(cache_dir: str, force_download: bool):
         "tech": 3,
         "politics": 4,
     }
-    labels = np.fromiter((label_dict[label]
-                         for label in df["category"]), dtype=int)
+    labels = np.fromiter((label_dict[label] for label in df["category"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
@@ -187,8 +275,7 @@ def download_imdb(cache_dir: str, force_download: bool):
     df = pd.read_csv(filepath)
 
     label_dict = {"negative": 0, "positive": 1}
-    labels = np.fromiter((label_dict[label]
-                         for label in df["sentiment"]), dtype=int)
+    labels = np.fromiter((label_dict[label] for label in df["sentiment"]), dtype=int)
 
     return ListDataset(df["review"].values), labels
 
@@ -208,35 +295,39 @@ def download_imdb_illuminating(cache_dir: str, force_download: bool):
     print("This is the illuminating d", df)
 
     label_dict = {0: 0, 1: 1}
-    labels = np.fromiter((label_dict[label]
-                         for label in df["label"]), dtype=int)
+    labels = np.fromiter((label_dict[label] for label in df["label"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
 
 @Register("illuminating-original-synthetic-combined", cacheable=True, one_hot=True)
-def download_imdb_illuminating_original_synthetic_combined(cache_dir: str, force_download: bool):
+def download_imdb_illuminating_original_synthetic_combined(
+    cache_dir: str, force_download: bool
+):
     """
 
     Paper of Philip: Illuminating blindspots
 
     """
 
-    filepath = "opendataval/data_files/illuminating_blindspots/original_synthetic_combined.csv"
+    filepath = (
+        "opendataval/data_files/illuminating_blindspots/original_synthetic_combined.csv"
+    )
 
     df = pd.read_csv(filepath)
 
     print("dataset head: ", df.head(), df.shape)
 
     label_dict = {0: 0, 1: 1}
-    labels = np.fromiter((label_dict[label]
-                         for label in df["label"]), dtype=int)
+    labels = np.fromiter((label_dict[label] for label in df["label"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
 
 @Register("illuminating-original-synthetic-combined_2000", cacheable=True, one_hot=True)
-def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, force_download: bool):
+def download_imdb_illuminating_original_synthetic_combined_2000(
+    cache_dir: str, force_download: bool
+):
     """
 
     Paper of Philip: Illuminating blind spots
@@ -250,16 +341,19 @@ def download_imdb_illuminating_original_synthetic_combined_2000(cache_dir: str, 
     print("dataset head: ", df.head())
 
     label_dict = {0: 0, 1: 1}
-    labels = np.fromiter((label_dict[label]
-                         for label in df["label"]), dtype=int)
-    
-    
+    labels = np.fromiter((label_dict[label] for label in df["label"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
 
-@Register("download_imdb_illuminating_original_synthetic_combined_2000_v2", cacheable=False, one_hot=True)
-def download_imdb_illuminating_original_synthetic_combined_2000_v2(cache_dir: str = None, force_download: bool = True):
+@Register(
+    "download_imdb_illuminating_original_synthetic_combined_2000_v2",
+    cacheable=False,
+    one_hot=True,
+)
+def download_imdb_illuminating_original_synthetic_combined_2000_v2(
+    cache_dir: str = None, force_download: bool = True
+):
     """
 
     Paper of Philip: Illuminating blind spots
@@ -273,33 +367,34 @@ def download_imdb_illuminating_original_synthetic_combined_2000_v2(cache_dir: st
     print("dataset head: ", df.head())
 
     label_dict = {0: 0, 1: 1}
-    labels = np.fromiter((label_dict[label]
-                         for label in df["label"]), dtype=int)
+    labels = np.fromiter((label_dict[label] for label in df["label"]), dtype=int)
 
     return ListDataset(df["text"].values), labels
 
 
 illuminating_original_synthetic_combined_embeddings_2000_v2_bert = Register(
-    "illuminating_original_synthetic_combined_embeddings_2000_v2_bert", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000_v2))
+    "illuminating_original_synthetic_combined_embeddings_2000_v2_bert", True, True
+)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000_v2))
 """Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings_2000_v2"``, BERT text embeddings."""
 
 
 illuminating_original_synthetic_combined_embedding = Register(
-    "illuminating_original_synthetic_combined_embeddings", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined))
+    "illuminating_original_synthetic_combined_embeddings", True, True
+)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined))
 """Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings"``, BERT text embeddings."""
 
 illuminating_original_synthetic_combined_embeddings_2000 = Register(
-    "illuminating_original_synthetic_combined_embeddings_2000", True, True)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000))
+    "illuminating_original_synthetic_combined_embeddings_2000", True, True
+)(BertEmbeddings(download_imdb_illuminating_original_synthetic_combined_2000))
 """Classification data set registered as ``"illuminating_original_synthetic_combined_embeddings_2000"``, BERT text embeddings."""
 
-illuminating_embedding = Register(
-    "illuminating-embeddings", True, True)(BertEmbeddings(download_imdb_illuminating))
+illuminating_embedding = Register("illuminating-embeddings", True, True)(
+    BertEmbeddings(download_imdb_illuminating)
+)
 """Classification data set registered as ``"illuminating-embeddings"``, BERT text embeddings."""
 
-bbc_embedding = Register("bbc-embeddings", True,
-                         True)(BertEmbeddings(download_bbc))
+bbc_embedding = Register("bbc-embeddings", True, True)(BertEmbeddings(download_bbc))
 """Classification data set registered as ``"bbc-embeddings"``, BERT text embeddings."""
 
-imdb_embedding = Register("imdb-embeddings", True,
-                          True)(BertEmbeddings(download_imdb))
+imdb_embedding = Register("imdb-embeddings", True, True)(BertEmbeddings(download_imdb))
 """Classification data set registered as ``"imdb-embeddings"``, BERT text embeddings."""
