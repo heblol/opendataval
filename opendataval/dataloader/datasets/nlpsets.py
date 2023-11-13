@@ -157,8 +157,6 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         # Process data in batches
         with torch.no_grad():
             for batch in dataloader:
-                print("-" * 10)
-                print("batch", batch)
                 batch_input_ids, batch_attention_mask = batch
                 batch_input_ids, batch_attention_mask = batch_input_ids.to(
                     device
@@ -173,7 +171,6 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
                 # Append batch_pooled_embeddings to the list
                 pooled_embeddings_list.append(batch_pooled_embeddings)
-                print("pool_embeddings_list:", pooled_embeddings_list)
 
         # Concatenate the pooled embeddings from all batches
         pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
