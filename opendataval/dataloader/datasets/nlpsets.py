@@ -7,7 +7,7 @@ from multiprocessing import pool
 import os
 from pathlib import Path
 from typing import Callable
-
+import tqdm
 import warnings
 import numpy as np
 import pandas as pd
@@ -156,7 +156,10 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         # Process data in batches
         with torch.no_grad():
-            for batch in dataloader:
+            print("-" * 10)
+            print("Showing processbar for the tqdm dataloader?")
+            print("-" * 10)
+            for batch in tqdm.tqdm(dataloader):
                 batch_input_ids, batch_attention_mask = batch
                 batch_input_ids, batch_attention_mask = batch_input_ids.to(
                     device
