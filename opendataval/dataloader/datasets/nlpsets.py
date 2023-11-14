@@ -141,16 +141,12 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         )
 
-        print("-" * 10)
-        print("Called tokenizer, and got a result")
         dataset = torch.utils.data.TensorDataset(
             tokenized_data.input_ids, tokenized_data.attention_mask
         )
 
-        print("now creating dataloader")
         dataloader = DataLoader(dataset, batch_size=8, shuffle=False)
-        print("-" * 10)
-        print("this is the dataset head, check if its shuffeld")
+
         # Printing the first 20 elements of the dataset tensor
         print(dataset[:20])
 
@@ -160,7 +156,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         # Process data in batches
         with torch.no_grad():
             print("-" * 10)
-            print("Showing processbar for the tqdm dataloader?")
+            print("With large datasets, this can take a while. ")
             print("-" * 10)
             for batch in tqdm.tqdm(dataloader):
                 batch_input_ids, batch_attention_mask = batch
