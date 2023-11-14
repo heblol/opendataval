@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from opendataval.dataloader.register import Register, cache
 from opendataval.dataloader.util import ListDataset
 
-MAX_DATASET_SIZE = 20000
+MAX_DATASET_SIZE = 2000000
 """Data Valuation algorithms can take a long time for large data sets, thus cap size."""
 
 
@@ -66,6 +66,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         dataset_size = min(len(labels), MAX_DATASET_SIZE)
 
+        print("Dataset size: ". dataset_size)
         if len(labels) > MAX_DATASET_SIZE:
             warnings.warn(
                 f"""Dataset size is larger than {
