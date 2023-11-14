@@ -66,7 +66,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         dataset_size = min(len(labels), MAX_DATASET_SIZE)
 
-        print("Dataset size: ". dataset_size)
+        print("Dataset size: ", dataset_size)
         if len(labels) > MAX_DATASET_SIZE:
             warnings.warn(
                 f"""Dataset size is larger than {
