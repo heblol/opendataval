@@ -82,8 +82,7 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher],
-                                  dict[str, Any]], str] = mix_labels,
+        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         pred_model: Optional[Model] = None,
@@ -126,8 +125,7 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher],
-                                  dict[str, Any]], str] = mix_labels,
+        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         model_name: Optional[str] = None,
@@ -196,10 +194,7 @@ class ExperimentMediator:
         ExperimentMediator
             ExperimentMediator created from ModelFactory defaults
         """
-        print("Inside the ExperimentMediator")
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
-
-        print("Adding noise?", add_noise is not None)
 
         fetcher = DataFetcher.setup(
             dataset_name=dataset_name,
@@ -273,8 +268,10 @@ class ExperimentMediator:
                 if self.raise_error:
                     raise ex
 
-                warnings.warm(f"""Skipping data evaluator {
-                              data_val} because of error: {ex!s}""")
+                warnings.warm(
+                    f"""Skipping data evaluator {
+                              data_val} because of error: {ex!s}"""
+                )
 
                 # warnings.warn(
                 #     f"""
@@ -426,8 +423,7 @@ class ExperimentMediator:
             Output DataFrame from an experiment run by ExperimentMediator
         """
         if not hasattr(self, "output_directory"):
-            warnings.warn(
-                "Output directory not set, output has not been saved")
+            warnings.warn("Output directory not set, output has not been saved")
             return
 
         df.to_csv(self.output_directory / file_name)
