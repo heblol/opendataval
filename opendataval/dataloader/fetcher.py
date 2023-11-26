@@ -384,7 +384,7 @@ class DataFetcher:
         })
         if sum((train_count, valid_count, test_count)) > self.num_points:
 
-            print("the sum is ", sum((train_count, valid_count, test_count), "numpoints=", self.num_points))
+            print("the sum is ", sum((train_count, valid_count, test_count)), "numpoints=", self.num_points)
             raise ValueError(
                 f"""Split totals must be <{
                     self.num_points}, but is {sum((train_count, valid_count, test_count))} and of the same type: """
