@@ -239,8 +239,6 @@ class Register:
         dataset_kwargs = {}
         original_dataset = None
 
-        print("Now loading the data 'load_data'")
-
         if self.cacheable:
             cache_dir = Path(
                 cache_dir if cache_dir is not None else Register.CACHE_DIR)
@@ -255,20 +253,15 @@ class Register:
             result = self.covar_label_func(
                 **dataset_kwargs)
 
-            print("THIS IS THE RESULKT", result)
-
             if len(result) == 3:
                 # Iff the dataset creation returns additional information, this is the full original dataset.
                 covar: np.ndarray
                 label: np.ndarray
                 original_dataset: Any = result
-                print("This is the original dataset", original_dataset)
             else:
-                covar, label = result
-                print("Only returned two objects", result)
-
+                covar, label = result  
         else:
-            print('No "covar_label_func" function ')
+            
             covar = self.cov_func(**dataset_kwargs)
             label = self.label_func(**dataset_kwargs)
 

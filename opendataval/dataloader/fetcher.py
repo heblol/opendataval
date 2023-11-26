@@ -396,11 +396,11 @@ class DataFetcher:
         self.train_indices, self.valid_indices, self.test_indices, _ = np.split(
             idx, sp)
 
-        print("These are the indices to create a split", {
-            "train_indices": self.train_indices,
-            "valid_indices": self.valid_indices,
-            "test_indices": self.test_indices,
-        })
+        # print("These are the indices to create a split", {
+        #     "train_indices": self.train_indices,
+        #     "valid_indices": self.valid_indices,
+        #     "test_indices": self.test_indices,
+        # })
 
         if isinstance(self.covar, Dataset):
             self.x_train = Subset(self.covar, self.train_indices)

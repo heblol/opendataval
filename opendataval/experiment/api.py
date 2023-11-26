@@ -217,9 +217,20 @@ class ExperimentMediator:
         # Prints base line performance
         model = pred_model.clone()
         x_train, y_train, *_, x_test, y_test = fetcher.datapoints
+        print("-" * 10)
+        print("These are the y_train points", pd.DataFrame(y_train).value_counts())
+        print("-" * 10)
         train_kwargs = {} if train_kwargs is None else train_kwargs
-
+        print(
+            "This is the x_train",
+            x_train[0][0],
+            "|||||||||||",
+            x_train[0][1],
+            "|||||||||||",
+            x_train[0][2],
+        )
         model.fit(x_train, y_train, **train_kwargs)
+        print("After model model fit in the model_factory_setup")
         if metric_name is None:
             metric = Metrics.ACCURACY if fetcher.one_hot else Metrics.NEG_MSE
         else:
