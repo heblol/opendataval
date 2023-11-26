@@ -139,7 +139,6 @@ class TorchClassMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset, batch_size, shuffle=False, pin_memory=True
             ):
-                print("this is the batch", x_batch)
                 # Moves data to correct device
                 x_batch = x_batch.to(device=self.device)
                 y_batch = y_batch.to(device=self.device)
