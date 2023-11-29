@@ -11,8 +11,7 @@ import requests
 import tqdm
 from torch.utils.data import Dataset
 
-DatasetFunc = Callable[..., Union[Dataset,
-                                  np.ndarray, tuple[np.ndarray, np.ndarray]]]
+DatasetFunc = Callable[..., Union[Dataset, np.ndarray, tuple[np.ndarray, np.ndarray]]]
 Self = TypeVar("Self", bound="Register")
 
 
@@ -142,10 +141,11 @@ class Register:
         one_hot: bool = False,
         cacheable: bool = False,
         presplit: bool = False,
-    ):
+    ) -> None:
         if dataset_name in Register.Datasets:
             warnings.warn(
-                f"Overriding {dataset_name}, because {dataset_name} was already registered, names must be unique.")
+                f"Overriding {dataset_name}, because {dataset_name} was already registered, names must be unique."
+            )
 
         self.dataset_name = dataset_name
         self.one_hot = one_hot
@@ -240,8 +240,7 @@ class Register:
         original_dataset = None
 
         if self.cacheable:
-            cache_dir = Path(
-                cache_dir if cache_dir is not None else Register.CACHE_DIR)
+            cache_dir = Path(cache_dir if cache_dir is not None else Register.CACHE_DIR)
             cache_dir.mkdir(parents=True, exist_ok=True)
 
             full_path = cache_dir / self.dataset_name
@@ -249,9 +248,7 @@ class Register:
             dataset_kwargs["force_download"] = force_download
 
         if hasattr(self, "covar_label_func"):
-
-            result = self.covar_label_func(
-                **dataset_kwargs)
+            result = self.covar_label_func(**dataset_kwargs)
 
             if len(result) == 3:
                 # Iff the dataset creation returns additional information, this is the full original dataset.
@@ -259,9 +256,8 @@ class Register:
                 label: np.ndarray
                 original_dataset: Any = result
             else:
-                covar, label = result  
+                covar, label = result
         else:
-            
             covar = self.cov_func(**dataset_kwargs)
             label = self.label_func(**dataset_kwargs)
 
@@ -274,8 +270,7 @@ class Register:
                 for cov in covar_tup:
                     cov.transform = self.covar_transform
             else:
-                covar_tup = tuple(self.covar_transform(cov)
-                                  for cov in covar_tup)
+                covar_tup = tuple(self.covar_transform(cov) for cov in covar_tup)
 
         if self.label_transform:
             label_tup = tuple(self.label_transform(lab) for lab in label_tup)

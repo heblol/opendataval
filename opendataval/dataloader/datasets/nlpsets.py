@@ -77,16 +77,16 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         print("checking max size: ok")
 
         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
-        embed_path = cache_dir / embed_file_name
+        embed_path = f"{cache_dir}/{embed_file_name}"
 
-        if embed_path.exists():
+        if os.path.exists(embed_path):
             print(
                 "Embedding path DOES exist. Loading dataset from cache! Do not reload everything."
             )
             nlp_embeddings = torch.load(embed_path)
             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
 
-        print("Embedding path does NOT exist.")
+        print("Embedding path does NOT exist.", embed_path)
         labels = labels[subset[:dataset_size]]
         entries = [entry for entry in dataset[subset[:dataset_size]]]
 
