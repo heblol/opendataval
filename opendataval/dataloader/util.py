@@ -156,6 +156,7 @@ class FolderDataset(Dataset):
 
     def write(self, batch_number: int, data: torch.Tensor):
         self.sizes.append(self.sizes[-1] + len(data))
+        print("Writing to file. An error might be caused by a full disk.")
         torch.save(data.detach(), self.format_batch_path(batch_number))
 
     @property
