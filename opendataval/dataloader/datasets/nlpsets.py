@@ -138,8 +138,6 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 
         # Dont batch, that shuffles the data
 
-        print("-" * 10)
-        print("Calling tokenizer")
         tokenized_data = tokenizer(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         )
