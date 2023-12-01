@@ -88,6 +88,9 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
                 "Embedding path DOES exist. Loading dataset from cache! Do not reload everything."
             )
             nlp_embeddings = torch.load(embed_path)
+
+            print("These are the nlp_embeddings?", nlp_embeddings.shape)
+            print("EMBEDDING", nlp_embeddings)
             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
 
         print("Embedding path does NOT exist.", embed_path)
