@@ -79,7 +79,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
         embed_path = f"{cache_dir}/{embed_file_name}"
 
-        if os.path.exists(embed_path):
+        if os.path.exists(embed_path) and not force_download:
             print(
                 "Embedding path DOES exist. Loading dataset from cache! Do not reload everything."
             )
