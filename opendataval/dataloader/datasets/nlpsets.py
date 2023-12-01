@@ -6,7 +6,7 @@ Uses HuggingFace
 from multiprocessing import pool
 import os
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Sequence
 import tqdm
 import warnings
 import numpy as np
@@ -14,13 +14,13 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from opendataval.dataloader.register import Register, cache
-from opendataval.dataloader.util import ListDataset
-
-MAX_DATASET_SIZE = 2000000
-"""Data Valuation algorithms can take a long time for large data sets, thus cap size."""
+from opendataval.dataloader.util import FolderDataset, ListDataset
+from opendataval.util import batched
 
 
-def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
+def BertEmbeddings(
+    func: Callable[[str, bool], tuple[Sequence[str], np.ndarray]], batch_size: int = 128
+):
     """Convert text data into pooled embeddings with DistilBERT model.
 
     Given a data set with a list of string, such as NLP data set function (see below),
@@ -42,60 +42,17 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
     def wrapper(
         cache_dir: str, force_download: bool, *args, **kwargs
     ) -> tuple[torch.Tensor, np.ndarray]:
-        from transformers import (
-            DistilBertModel,
-            BertTokenizer,
-            BertForSequenceClassification,
-        )
+        from transformers import DistilBertModel, DistilBertTokenizerFast
 
-        print("-" * 30)
-        print(
-            "Calling BertEmbeddings wrapper. This can take a while, especially with large datasets."
-        )
-        print("-" * 30)
-
-        BERT_PRETRAINED_NAME = "bert-base-uncased"  # TODO update this
+        BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
         cache_dir = Path(cache_dir)
+        embed_path = cache_dir / f"{func.__name__}_embed"
 
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
-        print("-" * 30)
-        print("imported raw dataset")
-
-        subset = np.random.RandomState(10).permutation(len(dataset))
-
-        print("-" * 30)
-        print("creating subsets")
-
-        dataset_size = min(len(labels), MAX_DATASET_SIZE)
-
-        print("Dataset size: ", dataset_size)
-        if len(labels) > MAX_DATASET_SIZE:
-            warnings.warn(
-                f"""Dataset size is larger than {
-                          MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE"""
-            )
-
-        print("-" * 30)
-        print("checking max size: ok")
-
-        embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
-        embed_path = f"{cache_dir}/{embed_file_name}"
-
-        if os.path.exists(embed_path) and not force_download:
-            print(
-                "Embedding path DOES exist. Loading dataset from cache! Do not reload everything."
-            )
-            nlp_embeddings = torch.load(embed_path)
-
-            print("These are the nlp_embeddings?", nlp_embeddings.shape)
-            print("EMBEDDING", nlp_embeddings)
-            return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
-
-        print("Embedding path does NOT exist.", embed_path)
-        labels = labels[subset[:dataset_size]]
-        entries = [entry for entry in dataset[subset[:dataset_size]]]
+        if FolderDataset.exists(embed_path):
+            return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
         device = torch.device(
@@ -106,105 +63,221 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
             else "cpu"
         )
 
-        print("Just before creating tokenizer ")
-        tokenizer = BertTokenizer.from_pretrained(BERT_PRETRAINED_NAME)
+        tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
+        bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+        folder_dataset = FolderDataset(embed_path)
+        print("just before the batch", batched)
+        for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
+            print("inside the batch??")
+            bert_inputs = tokenizer.__call__(
+                batch,
+                max_length=200,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+            ).to(device)
+            bert_inputs = {inp: bert_inputs[inp] for inp in tokenizer.model_input_names}
 
-        print("Creating bert from_pretrained")
-        bert_model = BertForSequenceClassification.from_pretrained(
-            BERT_PRETRAINED_NAME
-        ).to(device)
+            with torch.no_grad():
+                pool_embed = bert_model(**bert_inputs)[0]
+                word_embeddings = pool_embed.detach().cpu()[:, 0]
 
-        print("-" * 10)
-        print("Calling tokenizer using", device)
-        print("-" * 10)
-        # res = tokenizer.__call__(
-        #     entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
-        # ).to(device)
+            folder_dataset.write(batch_num, word_embeddings)
 
-        ########################################
-        # This was the original code
-        ########################################
-
-        # with torch.no_grad():
-        #     pooled_embeddings = (
-        #         (bert_model(res.input_ids, res.attention_mask)
-        #          [0]).detach().cpu()[:, 0]
-        #     )
-
-        ########################################
-        # This was the original code
-        ########################################
-
-        ######################################
-        # Trying to batch data
-        ######################################
-
-        # Dont batch, that shuffles the data
-
-        tokenized_data = tokenizer(
-            entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
-        )
-        print("-" * 10)
-        print("Called tokenizer, and got a result")
-        print("-" * 10)
-
-        dataset = torch.utils.data.TensorDataset(
-            tokenized_data.input_ids, tokenized_data.attention_mask
-        )
-
-        dataloader = DataLoader(dataset, batch_size=8, shuffle=False)
-
-        # Printing the first 20 elements of the dataset tensor
-        print(dataset[:20])
-
-        # Initialize an empty list to store pooled embeddings
-        pooled_embeddings_list = []
-
-        # Process data in batches
-        with torch.no_grad():
-            print("-" * 10)
-            print("With large datasets, this can take a while. ")
-            print("-" * 10)
-            for batch in tqdm.tqdm(dataloader):
-                batch_input_ids, batch_attention_mask = batch
-                batch_input_ids, batch_attention_mask = batch_input_ids.to(
-                    device
-                ), batch_attention_mask.to(device)
-
-                # Get pooled embeddings for the batch
-                batch_pooled_embeddings = (
-                    bert_model(batch_input_ids, batch_attention_mask)[0]
-                    .detach()
-                    .cpu()[:, 0]
-                )
-
-                print("This is the batch")
-
-                # Append batch_pooled_embeddings to the list
-                pooled_embeddings_list.append(batch_pooled_embeddings)
-
-        # Concatenate the pooled embeddings from all batches
-        pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
-
-        #######################################
-        # End of trying to batch data
-        #######################################
-
-        print("-" * 30)
-        print("Finished BertEmbeddings")
-        print("-" * 30)
-
-        if not os.path.exists(cache_dir):
-            print(
-                f"""cache dir does not exist, creating it cache_dir={
-                  cache_dir} """
-            )
-            os.mkdir(cache_dir)
-
-        torch.save(pooled_embeddings.detach(), embed_path)
-        return pooled_embeddings, np.array(labels)
+        folder_dataset.save()
+        return folder_dataset, np.array(labels)
 
     return wrapper
+
+
+# def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
+#     """Convert text data into pooled embeddings with DistilBERT model.
+
+#     Given a data set with a list of string, such as NLP data set function (see below),
+#     converts the sentences into strings. It is the equivalent of training a downstream
+#     task with bert but all the BERT layers are frozen. It is advised to just
+#     train with the raw strings with a BERT model located in models/bert.py or defining
+#     your own model. DistilBERT is just a faster version of BERT
+
+#     References
+#     ----------
+#     .. [1] J. Devlin, M.W. Chang, K. Lee, and K. Toutanova,
+#         BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+#         arXiv.org, 2018. Available: https://arxiv.org/abs/1810.04805.
+#     .. [2] V. Sanh, L. Debut, J. Chaumond, and T. Wolf,
+#         DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter
+#         arXiv.org, 2019. Available: https://arxiv.org/abs/1910.01108.
+#     """
+
+#     def wrapper(
+#         cache_dir: str, force_download: bool, *args, **kwargs
+#     ) -> tuple[torch.Tensor, np.ndarray]:
+#         from transformers import (
+#             DistilBertModel,
+#             BertTokenizer,
+#             BertForSequenceClassification,
+#         )
+
+#         print("-" * 30)
+#         print(
+#             "Calling BertEmbeddings wrapper. This can take a while, especially with large datasets."
+#         )
+#         print("-" * 30)
+
+#         BERT_PRETRAINED_NAME = "bert-base-uncased"  # TODO update this
+
+#         cache_dir = Path(cache_dir)
+
+#         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
+
+#         print("-" * 30)
+#         print("imported raw dataset")
+
+#         subset = np.random.RandomState(10).permutation(len(dataset))
+
+#         print("-" * 30)
+#         print("creating subsets")
+
+#         dataset_size = min(len(labels), MAX_DATASET_SIZE)
+
+#         print("Dataset size: ", dataset_size)
+#         if len(labels) > MAX_DATASET_SIZE:
+#             warnings.warn(
+#                 f"""Dataset size is larger than {
+#                           MAX_DATASET_SIZE}, capping at MAX_DATASET_SIZE"""
+#             )
+
+#         print("-" * 30)
+#         print("checking max size: ok")
+
+#         embed_file_name = f"{func.__name__}_{dataset_size}_embed.pt"
+#         embed_path = f"{cache_dir}/{embed_file_name}"
+
+#         if os.path.exists(embed_path) and not force_download:
+#             print(
+#                 "Embedding path DOES exist. Loading dataset from cache! Do not reload everything."
+#             )
+#             nlp_embeddings = torch.load(embed_path)
+
+#             print("These are the nlp_embeddings?", nlp_embeddings.shape)
+#             print("EMBEDDING", nlp_embeddings)
+#             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
+
+#         print("Embedding path does NOT exist.", embed_path)
+#         labels = labels[subset[:dataset_size]]
+#         entries = [entry for entry in dataset[subset[:dataset_size]]]
+
+#         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
+#         device = torch.device(
+#             "cuda"
+#             if torch.cuda.is_available()
+#             else "mps"
+#             if torch.backends.mps.is_available()
+#             else "cpu"
+#         )
+
+#         print("Just before creating tokenizer ")
+#         tokenizer = BertTokenizer.from_pretrained(BERT_PRETRAINED_NAME)
+
+#         print("Creating bert from_pretrained")
+#         bert_model = BertForSequenceClassification.from_pretrained(
+#             BERT_PRETRAINED_NAME
+#         ).to(device)
+
+#         print("-" * 10)
+#         print("Calling tokenizer using", device)
+#         print("-" * 10)
+
+#         if device == "cpu":
+#             raise Exception("Dont finetune Bert using CPU")
+#         # res = tokenizer.__call__(
+#         #     entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
+#         # ).to(device)
+
+#         ########################################
+#         # This was the original code
+#         ########################################
+
+#         # with torch.no_grad():
+#         #     pooled_embeddings = (
+#         #         (bert_model(res.input_ids, res.attention_mask)
+#         #          [0]).detach().cpu()[:, 0]
+#         #     )
+
+#         ########################################
+#         # This was the original code
+#         ########################################
+
+#         ######################################
+#         # Trying to batch data
+#         ######################################
+
+#         # Dont batch, that shuffles the data
+
+#         tokenized_data = tokenizer(
+#             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
+#         )
+#         print("-" * 10)
+#         print("Called tokenizer, and got a result")
+#         print("-" * 10)
+
+#         dataset = torch.utils.data.TensorDataset(
+#             tokenized_data.input_ids, tokenized_data.attention_mask
+#         )
+
+#         dataloader = DataLoader(dataset, batch_size=8, shuffle=False)
+
+#         # Printing the first 20 elements of the dataset tensor
+#         print(dataset[:20])
+
+#         # Initialize an empty list to store pooled embeddings
+#         pooled_embeddings_list = []
+
+#         # Process data in batches
+#         with torch.no_grad():
+#             print("-" * 10)
+#             print("With large datasets, this can take a while. ")
+#             print("-" * 10)
+#             for batch in tqdm.tqdm(dataloader):
+#                 batch_input_ids, batch_attention_mask = batch
+#                 batch_input_ids, batch_attention_mask = batch_input_ids.to(
+#                     device
+#                 ), batch_attention_mask.to(device)
+
+#                 # Get pooled embeddings for the batch
+#                 batch_pooled_embeddings = (
+#                     bert_model(batch_input_ids, batch_attention_mask)[0]
+#                     .detach()
+#                     .cpu()[:, 0]
+#                 )
+
+#                 print("This is the batch")
+
+#                 # Append batch_pooled_embeddings to the list
+#                 pooled_embeddings_list.append(batch_pooled_embeddings)
+
+#         # Concatenate the pooled embeddings from all batches
+#         pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
+
+#         #######################################
+#         # End of trying to batch data
+#         #######################################
+
+#         print("-" * 30)
+#         print("Finished BertEmbeddings")
+#         print("-" * 30)
+
+#         if not os.path.exists(cache_dir):
+#             print(
+#                 f"""cache dir does not exist, creating it cache_dir={
+#                   cache_dir} """
+#             )
+#             os.mkdir(cache_dir)
+
+#         torch.save(pooled_embeddings.detach(), embed_path)
+#         return pooled_embeddings, np.array(labels)
+
+#     return wrapper
 
 
 # def pooled_embeddings_batched(

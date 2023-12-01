@@ -28,6 +28,7 @@ def set_random_state(random_state: Optional[RandomState] = None) -> RandomState:
 
 
 def batched(it, n=1):
+    print("'batched' was called?")
     if n < 1:
         raise ValueError("n must be at least one")
 
