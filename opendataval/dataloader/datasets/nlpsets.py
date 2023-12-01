@@ -42,7 +42,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
     def wrapper(
         cache_dir: str, force_download: bool, *args, **kwargs
     ) -> tuple[torch.Tensor, np.ndarray]:
-        from transformers import DistilBertModel, DistilBertTokenizerFast
+        from transformers import DistilBertModel, BertTokenizer, BertForSequenceClassification
 
         print("-" * 30)
         print(
@@ -50,7 +50,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         )
         print("-" * 30)
 
-        BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
+        BERT_PRETRAINED_NAME = "bert-base-uncased"  # TODO update this
 
         cache_dir = Path(cache_dir)
 
@@ -100,10 +100,10 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         )
 
         print("Just before creating tokenizer ")
-        tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
+        tokenizer = BertTokenizer.from_pretrained(BERT_PRETRAINED_NAME)
 
         print("Creating bert from_pretrained")
-        bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+        bert_model = BertForSequenceClassification.from_pretrained(BERT_PRETRAINED_NAME).to(device)
 
         print("-" * 10)
         print("Calling tokenizer")
