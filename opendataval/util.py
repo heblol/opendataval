@@ -3,12 +3,8 @@ import time
 from datetime import timedelta
 from enum import Enum
 from functools import update_wrapper
-<<<<<<< HEAD
-from typing import Any, Callable, Generic, Optional, TypeVar
-=======
 from itertools import islice
-from typing import Callable, Generic, Optional, TypeVar
->>>>>>> 8676e38aa52f81197969f0a2d91375161192e270
+from typing import Callable, Generic, Optional, TypeVar, Any
 
 import numpy as np
 import pandas as pd
@@ -63,8 +59,7 @@ class ReprMixin:
         """Record the non-default arguments for unique identifier of object."""
         obj = object.__new__(cls)
         obj.__inputs = [str(arg) for arg in args]
-        obj.__inputs.extend(
-            f"{arg_name}={value}" for arg_name, value in kwargs.items())
+        obj.__inputs.extend(f"{arg_name}={value}" for arg_name, value in kwargs.items())
 
         return obj
 
@@ -147,8 +142,7 @@ class ParamSweep:
                 perf_list.append(perf)
 
             end_time = time.perf_counter()
-            self.result[str(kwargs)] = MeanStdTime(
-                perf_list, end_time - start_time)
+            self.result[str(kwargs)] = MeanStdTime(perf_list, end_time - start_time)
         return self.result
 
     @staticmethod
