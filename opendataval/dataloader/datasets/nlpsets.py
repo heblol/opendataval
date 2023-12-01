@@ -46,15 +46,18 @@ def BertEmbeddings(
 
         BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
+        print("-" * 40)
+        print("# Running BertEmbeddings")
+        print("-"*40)
+    
+
         cache_dir = Path(cache_dir)
         embed_path = cache_dir / f"{func.__name__}_embed"
 
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
         if FolderDataset.exists(embed_path):
-            print("-" * 40)
             print(f"# Found Cached dataset!")
-            print("-" * 40)
             return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
@@ -91,11 +94,11 @@ def BertEmbeddings(
             folder_dataset.write(batch_num, word_embeddings)
 
         folder_dataset.save()
-        return folder_dataset, np.array(labels)
+        print("-" * 40)
+        print("# Finished BertEmbeddings wrapper.")
+        print("-" * 40)
 
-    print("-" * 40)
-    print("# Finished BertEmbeddings wrapper.")
-    print("-" * 40)
+        return folder_dataset, np.array(labels)
 
     return wrapper
 
