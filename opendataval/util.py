@@ -3,7 +3,12 @@ import time
 from datetime import timedelta
 from enum import Enum
 from functools import update_wrapper
+<<<<<<< HEAD
 from typing import Any, Callable, Generic, Optional, TypeVar
+=======
+from itertools import islice
+from typing import Callable, Generic, Optional, TypeVar
+>>>>>>> 8676e38aa52f81197969f0a2d91375161192e270
 
 import numpy as np
 import pandas as pd
@@ -24,6 +29,15 @@ def set_random_state(random_state: Optional[RandomState] = None) -> RandomState:
     torch.manual_seed(check_random_state(random_state).tomaxint())
     random_state = check_random_state(random_state)
     return random_state
+
+
+def batched(it, n=1):
+    if n < 1:
+        raise ValueError("n must be at least one")
+
+    it = iter(it)  # without this step, always resets
+    while batch := tuple(islice(it, n)):
+        yield batch
 
 
 class StrEnum(str, Enum):
