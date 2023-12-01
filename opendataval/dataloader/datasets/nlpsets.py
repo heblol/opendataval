@@ -46,10 +46,11 @@ def BertEmbeddings(
 
         BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
 
+        force_download = True
+
         print("-" * 40)
         print("# Running BertEmbeddings")
-        print("-"*40)
-    
+        print("-" * 40)
 
         cache_dir = Path(cache_dir)
         embed_path = cache_dir / f"{func.__name__}_embed"
