@@ -68,7 +68,6 @@ def BertEmbeddings(
         folder_dataset = FolderDataset(embed_path)
         print("just before the batch", batched)
         for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
-            print("inside the batch??")
             bert_inputs = tokenizer.__call__(
                 batch,
                 max_length=200,
