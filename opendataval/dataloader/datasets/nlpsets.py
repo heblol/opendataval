@@ -117,7 +117,6 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         # res = tokenizer.__call__(
         #     entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         # ).to(device)
-       
 
         ########################################
         # This was the original code
@@ -144,7 +143,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         tokenized_data = tokenizer(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
         )
-         print("-" * 10)
+        print("-" * 10)
         print("Called tokenizer, and got a result")
         print("-" * 10)
 
