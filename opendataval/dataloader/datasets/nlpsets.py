@@ -42,7 +42,11 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
     def wrapper(
         cache_dir: str, force_download: bool, *args, **kwargs
     ) -> tuple[torch.Tensor, np.ndarray]:
-        from transformers import DistilBertModel, BertTokenizer, BertForSequenceClassification
+        from transformers import (
+            DistilBertModel,
+            BertTokenizer,
+            BertForSequenceClassification,
+        )
 
         print("-" * 30)
         print(
@@ -103,10 +107,12 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
         tokenizer = BertTokenizer.from_pretrained(BERT_PRETRAINED_NAME)
 
         print("Creating bert from_pretrained")
-        bert_model = BertForSequenceClassification.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+        bert_model = BertForSequenceClassification.from_pretrained(
+            BERT_PRETRAINED_NAME
+        ).to(device)
 
         print("-" * 10)
-        print("Calling tokenizer")
+        print("Calling tokenizer using", device)
         print("-" * 10)
         res = tokenizer.__call__(
             entries, max_length=200, padding=True, truncation=True, return_tensors="pt"
