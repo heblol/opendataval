@@ -80,6 +80,7 @@ def BertEmbeddings(
             with torch.no_grad():
                 pool_embed = bert_model(**bert_inputs)[0]
                 word_embeddings = pool_embed.detach().cpu()[:, 0]
+
             folder_dataset.write(batch_num, word_embeddings)
 
         folder_dataset.save()
