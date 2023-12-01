@@ -52,6 +52,9 @@ def BertEmbeddings(
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
         if FolderDataset.exists(embed_path):
+            print("-" * 40)
+            print(f"# Found Cached dataset!")
+            print("-" * 40)
             return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
@@ -66,7 +69,11 @@ def BertEmbeddings(
         tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
         bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
         folder_dataset = FolderDataset(embed_path)
-        print("just before the batch", batched)
+        print("-" * 40)
+        print(
+            "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
+        )
+        print("-" * 40)
         for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
             bert_inputs = tokenizer.__call__(
                 batch,
@@ -85,6 +92,10 @@ def BertEmbeddings(
 
         folder_dataset.save()
         return folder_dataset, np.array(labels)
+
+    print("-" * 40)
+    print("# Finished BertEmbeddings wrapper.")
+    print("-" * 40)
 
     return wrapper
 
