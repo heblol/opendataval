@@ -178,6 +178,8 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
                     .cpu()[:, 0]
                 )
 
+                print("This is the batch_pooled_embeddings", batch_pooled_embeddings)
+
                 # Append batch_pooled_embeddings to the list
                 pooled_embeddings_list.append(batch_pooled_embeddings)
 
