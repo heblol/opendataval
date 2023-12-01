@@ -7,7 +7,7 @@ from multiprocessing import pool
 import os
 from pathlib import Path
 from typing import Callable, Sequence
-import tqdm
+from tqdm import tqdm
 import warnings
 import numpy as np
 import pandas as pd
