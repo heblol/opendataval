@@ -156,7 +156,7 @@ class FolderDataset(Dataset):
 
     def write(self, batch_number: int, data: torch.Tensor):
         self.sizes.append(self.sizes[-1] + len(data))
-        torch.save(data, self.format_batch_path(batch_number))
+        torch.save(data.detach(), self.format_batch_path(batch_number))
 
     @property
     def metadata(self) -> dict[str, Any]:
