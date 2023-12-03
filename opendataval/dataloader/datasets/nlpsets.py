@@ -58,7 +58,7 @@ def BertEmbeddings(
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
         embed_file_name = f"{func.__name__}_{len(labels)}_embed.pt"
-        embed_path = f"{cache_dir}/{embed_file_name}"
+        embed_path = f"{cache_dir}/{func.__name__}_embed"
 
         if FolderDataset.exists(embed_path):
             print(f"# Found Cached dataset!")
@@ -104,6 +104,9 @@ def BertEmbeddings(
 
             # folder_dataset.write(batch_num, word_embeddings)
 
+        # Concatenate the pooled embeddings from all batches
+        pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
+
         ### -- I created this, saving the model -- ###
         if not os.path.exists(cache_dir):
             print(
@@ -112,7 +115,8 @@ def BertEmbeddings(
             )
             os.mkdir(cache_dir)
 
-        torch.save(pooled_embeddings.detach(), embed_path)
+        # Concatenate the pooled embeddings from all batches
+        torch.save(pooled_embeddings.detach(), f"{embed_path}/{embed_file_name}")
         ### -- /END I created this, saving the model -- ###
 
         folder_dataset.save()
