@@ -124,7 +124,7 @@ def BertEmbeddings(
         print("# Finished BertEmbeddings wrapper.")
         print("-" * 40)
 
-        return folder_dataset, np.array(labels)
+        return pooled_embeddings, np.array(labels)
 
     return wrapper
 
