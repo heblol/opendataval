@@ -62,7 +62,9 @@ def BertEmbeddings(
 
         if FolderDataset.exists(embed_path):
             print(f"# Found Cached dataset!", embed_path)
-            return FolderDataset.load(embed_path), labels
+            nlp_embeddings = torch.load(embed_path)
+            return nlp_embeddings, labels
+            # return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
         device = torch.device(
