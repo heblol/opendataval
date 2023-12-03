@@ -125,7 +125,7 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
+        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str, None] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         model_name: Optional[str] = None,
