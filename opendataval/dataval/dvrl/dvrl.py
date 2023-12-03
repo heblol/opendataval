@@ -187,7 +187,7 @@ class DVRL(DataEvaluator, ModelMixin):
             else "cpu"
         )
 
-        cpu_gen = torch.Generator(device).manual_seed(self.random_state.tomaxint())
+        cpu_gen = torch.Generator("cpu").manual_seed(self.random_state.tomaxint())
 
         data = CatDataset(self.x_train, self.y_train, self.y_pred_diff)
         rs = RandomSampler(data, True, self.rl_epochs * batch_size, generator=cpu_gen)
