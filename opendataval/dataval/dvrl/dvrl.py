@@ -178,7 +178,16 @@ class DVRL(DataEvaluator, ModelMixin):
         criterion = DveLoss(threshold=self.threshold)
 
         gen = torch.Generator(self.device).manual_seed(self.random_state.tomaxint())
-        cpu_gen = torch.Generator("cpu").manual_seed(self.random_state.tomaxint())
+
+        device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+
+        cpu_gen = torch.Generator(device).manual_seed(self.random_state.tomaxint())
 
         data = CatDataset(self.x_train, self.y_train, self.y_pred_diff)
         rs = RandomSampler(data, True, self.rl_epochs * batch_size, generator=cpu_gen)
