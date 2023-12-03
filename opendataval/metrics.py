@@ -6,6 +6,16 @@ from opendataval.util import FuncEnum
 
 def accuracy(a: torch.Tensor, b: torch.Tensor) -> float:
     """Compute accuracy of two one-hot encoding tensors."""
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+
+    a = a.to(device)
+    b = b.to(device)
     return (a.argmax(dim=1) == b.argmax(dim=1)).float().mean().item()
 
 
