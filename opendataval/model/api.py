@@ -141,7 +141,8 @@ class TorchClassMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset, batch_size, shuffle=False, pin_memory=True
             ):
-                
+                x_batch = torch.Tensor(x_batch)
+                y_batch = torch.Tensor(y_batch)
                
                 # Moves data to correct device
                 # x_batch = x_batch.to(device=self.device)
