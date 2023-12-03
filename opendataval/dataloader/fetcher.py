@@ -90,10 +90,12 @@ class DataFetcher:
                 f"{dataset_name=}"
             )
 
+        print(f"Getting dataset from Register.Datasets[{dataset_name}]")
         self.dataset = Register.Datasets[dataset_name]
         self.one_hot = self.dataset.one_hot
 
         if self.dataset.presplit:
+            print("Running the presplit", self.dataset.presplit)
             self._presplit_data(*self.dataset.load_data(cache_dir, force_download))
         else:
             print(

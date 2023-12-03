@@ -109,6 +109,7 @@ class ListDataset(Dataset[T_co]):
 
 
 def load_tensor(tensor_path: Path) -> torch.Tensor:
+    print("Loading tensor from path", tensor_path)
     with torch.no_grad():
         return torch.load(tensor_path, map_location="cpu").detach()
 

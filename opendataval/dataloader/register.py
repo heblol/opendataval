@@ -239,6 +239,8 @@ class Register:
         dataset_kwargs = {}
         original_dataset = None
 
+        print("Getting dataset from cache_dir", cache_dir)
+
         if self.cacheable:
             cache_dir = Path(cache_dir if cache_dir is not None else Register.CACHE_DIR)
             cache_dir.mkdir(parents=True, exist_ok=True)
