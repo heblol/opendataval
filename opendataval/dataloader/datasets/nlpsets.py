@@ -61,7 +61,7 @@ def BertEmbeddings(
         embed_path = f"{cache_dir}/{func.__name__}_embed"
 
         if FolderDataset.exists(embed_path):
-            print(f"# Found Cached dataset!")
+            print(f"# Found Cached dataset!", embed_path)
             return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
