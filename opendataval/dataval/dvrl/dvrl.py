@@ -64,6 +64,13 @@ class DVRL(DataEvaluator, ModelMixin):
         self.hidden_dim = hidden_dim
         self.layer_number = layer_number
         self.comb_dim = comb_dim
+        device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
         self.device = device
 
         # Training parameters
@@ -102,8 +109,7 @@ class DVRL(DataEvaluator, ModelMixin):
         print("this is the x_train", x_train)
 
         self.num_points, [*self.feature_dim] = len(x_train), x_train[0].shape
-        [*self.label_dim] = (1,
-                             ) if self.y_train.ndim == 1 else self.y_train[0].shape
+        [*self.label_dim] = (1,) if self.y_train.ndim == 1 else self.y_train[0].shape
 
         self.value_estimator = DataValueEstimatorRL(
             x_dim=np.prod(self.feature_dim),
@@ -168,18 +174,14 @@ class DVRL(DataEvaluator, ModelMixin):
         self._evaluate_baseline_models(*args, **kwargs)
 
         # Solver
-        optimizer = torch.optim.Adam(
-            self.value_estimator.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.value_estimator.parameters(), lr=self.lr)
         criterion = DveLoss(threshold=self.threshold)
 
-        gen = torch.Generator(self.device).manual_seed(
-            self.random_state.tomaxint())
-        cpu_gen = torch.Generator("cpu").manual_seed(
-            self.random_state.tomaxint())
+        gen = torch.Generator(self.device).manual_seed(self.random_state.tomaxint())
+        cpu_gen = torch.Generator("cpu").manual_seed(self.random_state.tomaxint())
 
         data = CatDataset(self.x_train, self.y_train, self.y_pred_diff)
-        rs = RandomSampler(data, True, self.rl_epochs *
-                           batch_size, generator=cpu_gen)
+        rs = RandomSampler(data, True, self.rl_epochs * batch_size, generator=cpu_gen)
 
         print("I am using the dataloader here!")
         dataloader = DataLoader(
@@ -201,14 +203,12 @@ class DVRL(DataEvaluator, ModelMixin):
             optimizer.zero_grad()
 
             # Generates selection probability
-            pred_dataval = self.value_estimator(
-                x_batch_ve, y_batch_ve, y_hat_batch_ve)
+            pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
 
             # Samples the selection probability
             select_prob = torch.bernoulli(pred_dataval, generator=gen)
             if select_prob.sum().item() == 0:  # Exception (select probability is 0)
-                pred_dataval = 0.5 * \
-                    torch.ones_like(pred_dataval, requires_grad=True)
+                pred_dataval = 0.5 * torch.ones_like(pred_dataval, requires_grad=True)
                 select_prob = torch.bernoulli(pred_dataval, generator=gen)
 
             # Prediction and training
@@ -280,8 +280,7 @@ class DVRL(DataEvaluator, ModelMixin):
                 y_batch = y_batch.to(device=self.device)
                 y_hat_batch = y_hat_batch.to(device=self.device)
 
-                data_values = self.value_estimator(
-                    x_batch, y_batch, y_hat_batch)
+                data_values = self.value_estimator(x_batch, y_batch, y_hat_batch)
                 response = torch.cat([response, data_values])
 
         return response.squeeze().numpy(force=True)
@@ -458,8 +457,7 @@ class DveLoss(nn.Module):
         torch.Tensor
             Computed loss tensor for Value Estimator
         """
-        loss = F.binary_cross_entropy(
-            pred_dataval, selector_input, reduction="sum")
+        loss = F.binary_cross_entropy(pred_dataval, selector_input, reduction="sum")
 
         reward_loss = reward_input * loss
         search_loss = (  # Additional loss when VE is stuck outside threshold range

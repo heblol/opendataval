@@ -53,6 +53,10 @@ class LavaEvaluator(DataEvaluator, ModelLessMixin):
         macos_fix()
         torch.manual_seed(check_random_state(random_state).tomaxint())
         self.embedding_model = embedding_model
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
         self.device = device
 
     def train_data_values(self, *args, **kwargs):
