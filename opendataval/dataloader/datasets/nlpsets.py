@@ -55,10 +55,10 @@ def BertEmbeddings(
         cache_dir = Path(cache_dir)
         # embed_path = cache_dir / f"{func.__name__}_embed"
 
+        dataset, labels = func(cache_dir, force_download, *args, **kwargs)
+
         embed_file_name = f"{func.__name__}_{len(labels)}_embed.pt"
         embed_path = f"{cache_dir}/{embed_file_name}"
-
-        dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
         if FolderDataset.exists(embed_path):
             print(f"# Found Cached dataset!")
