@@ -141,6 +141,9 @@ class TorchClassMixin(TorchModel):
             ):
                 
                 print("this is x_batch", x_batch, type(x_batch))
+
+                x_batch = torch.Tensor(x_batch)
+                y_batch = torch.Tensor(y_batch)
                 # Moves data to correct device
                 x_batch = x_batch.to(device=self.device)
                 y_batch = y_batch.to(device=self.device)
