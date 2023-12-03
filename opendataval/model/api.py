@@ -144,8 +144,8 @@ class TorchClassMixin(TorchModel):
                 
                
                 # Moves data to correct device
-                x_batch = x_batch.to(device=self.device)
-                y_batch = y_batch.to(device=self.device)
+                # x_batch = x_batch.to(device=self.device)
+                # y_batch = y_batch.to(device=self.device)
 
                 optimizer.zero_grad()
                 outputs = self.__call__(x_batch)
