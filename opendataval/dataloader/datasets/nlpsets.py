@@ -53,7 +53,10 @@ def BertEmbeddings(
         print("-" * 40)
 
         cache_dir = Path(cache_dir)
-        embed_path = cache_dir / f"{func.__name__}_embed"
+        # embed_path = cache_dir / f"{func.__name__}_embed"
+
+        embed_file_name = f"{func.__name__}_{len(labels)}_embed.pt"
+        embed_path = f"{cache_dir}/{embed_file_name}"
 
         dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
@@ -73,6 +76,10 @@ def BertEmbeddings(
         tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
         bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
         folder_dataset = FolderDataset(embed_path)
+
+        # Initialize an empty list to store pooled embeddings
+        pooled_embeddings_list = []
+
         print("-" * 40)
         print(
             "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
@@ -92,7 +99,21 @@ def BertEmbeddings(
                 pool_embed = bert_model(**bert_inputs)[0]
                 word_embeddings = pool_embed.detach().cpu()[:, 0]
 
+                # I added this line of code:
+                pooled_embeddings_list.append(word_embeddings)
+
             # folder_dataset.write(batch_num, word_embeddings)
+
+        ### -- I created this, saving the model -- ###
+        if not os.path.exists(cache_dir):
+            print(
+                f"""cache dir does not exist, creating it cache_dir={
+                  cache_dir} """
+            )
+            os.mkdir(cache_dir)
+
+        torch.save(pooled_embeddings.detach(), embed_path)
+        ### -- /END I created this, saving the model -- ###
 
         folder_dataset.save()
         print("-" * 40)

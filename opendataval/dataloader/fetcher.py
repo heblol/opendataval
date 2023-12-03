@@ -102,6 +102,7 @@ class DataFetcher:
                     "dataset_name": dataset_name,
                 },
             )
+            print("Running _add_data")
             self._add_data(*self.dataset.load_data(cache_dir, force_download))
 
         self.random_state = check_random_state(random_state)
