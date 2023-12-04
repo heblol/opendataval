@@ -271,7 +271,7 @@ class ExperimentMediator:
                 if self.raise_error:
                     raise ex
 
-                warnings.warm(
+                warnings.warn(
                     f"""Skipping data evaluator {
                               data_val} because of error: {ex!s}"""
                 )
