@@ -220,11 +220,8 @@ class ExperimentMediator:
         model = pred_model.clone()
         x_train, y_train, *_, x_test, y_test = fetcher.datapoints
         print("-" * 10)
-        print(
-            "These are the y_train points",
-            pd.DataFrame(y_train).value_counts()
-        )
-        print(x_train.head())
+        print("These are the y_train points", pd.DataFrame(y_train).value_counts())
+        print(x_train)
         print("-" * 10)
         train_kwargs = {} if train_kwargs is None else train_kwargs
         model.fit(x_train, y_train, **train_kwargs)
