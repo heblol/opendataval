@@ -204,11 +204,16 @@ class DVRL(DataEvaluator, ModelMixin):
 
             optimizer.zero_grad()
 
-            print("just set zero grad", {
-                "x_batch_ve": x_batch_ve,
-                "y_batch_ve": y_batch_ve,
-                "y_hat_batch_ve": y_hat_batch_ve
-            })
+            print(
+                "just set zero grad",
+                {
+                    "device": self.device,
+                    "x_batch_ve": x_batch_ve,
+                    "y_batch_ve": y_batch_ve,
+                    "y_hat_batch_ve": y_hat_batch_ve,
+                    "value_estimator": self.value_estimator,
+                },
+            )
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
             print("predicted dataval", pred_dataval)
@@ -222,10 +227,7 @@ class DVRL(DataEvaluator, ModelMixin):
             # Prediction and training
             new_model = self.pred_model.clone()
             print("before fit model")
-            print(
-                {"x_batch": x_batch,
-                "y_batch": y_batch}
-            )
+            print({"x_batch": x_batch, "y_batch": y_batch})
             new_model.fit(
                 x_batch,
                 y_batch,
