@@ -71,7 +71,7 @@ class DVRL(DataEvaluator, ModelMixin):
         #     if torch.backends.mps.is_available()
         #     else "cpu"
         # )
-        self.device = torch.device("cpu")
+        self.device = device
 
         # Training parameters
         self.rl_epochs = rl_epochs
