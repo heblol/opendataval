@@ -80,6 +80,8 @@ class DataEvaluator(ABC, ReprMixin):
         self : object
             Returns a Data Evaluator.
         """
+
+        print("we are having x_train", x_train)
         self.x_train = x_train
         self.y_train = y_train
         self.x_valid = x_valid

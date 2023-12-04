@@ -32,7 +32,7 @@ class Model(ABC):
         y_train: Union[torch.Tensor, Dataset],
         *args,
         sample_weights: Optional[torch.Tensor] = None,
-        **kwargs
+        **kwargs,
     ) -> Self:
         """Fits the model on the training data.
 
@@ -133,12 +133,19 @@ class TorchClassMixin(TorchModel):
         criterion = F.binary_cross_entropy if self.num_classes == 2 else F.cross_entropy
         dataset = CatDataset(x_train, y_train, sample_weight)
 
+        print("ivo This is the original train data", type(x_train), type(y_train))
+
         self.train()
         for _ in range(int(epochs)):
             # *weights helps check if we passed weights into the Dataloader
             for x_batch, y_batch, *weights in DataLoader(
-                dataset, batch_size, shuffle=True, pin_memory=True
+                dataset, batch_size, shuffle=False, pin_memory=True
             ):
+                # print("X-batch", x_batch)
+                # print("Y-batch", y_batch)
+                # x_batch = torch.tensor(x_batch)
+                # y_batch = torch.tensor(y_batch)
+
                 # Moves data to correct device
                 x_batch = x_batch.to(device=self.device)
                 y_batch = y_batch.to(device=self.device)
@@ -201,7 +208,7 @@ class TorchRegressMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset,
                 batch_size,
-                shuffle=True,
+                shuffle=False,
                 pin_memory=True,
             ):
                 # Moves data to correct device
@@ -251,6 +258,9 @@ class TorchPredictMixin(TorchModel):
         return y_hat
 
 
+import pandas as pd
+
+
 def to_numpy(tensors: tuple[torch.Tensor]) -> tuple[torch.Tensor]:
     """Mini function to move tensor to CPU for sk-learn."""
     return tuple(t.numpy(force=True) for t in default_collate(tensors))
@@ -281,7 +291,7 @@ class ClassifierSkLearnWrapper(Model):
         y_train: Union[torch.Tensor, Dataset],
         *args,
         sample_weight: Optional[torch.Tensor] = None,
-        **kwargs
+        **kwargs,
     ):
         """Fits the model on the training data.
 
@@ -330,6 +340,7 @@ class ClassifierSkLearnWrapper(Model):
                 weights = np.squeeze(weights[0])
                 self.model.fit(x_train, y_train, *args, sample_weight=weights, **kwargs)
             else:
+                print("Y VALUES", pd.DataFrame(y_train).value_counts())
                 self.model.fit(x_train, y_train, *args, sample_weight=None, **kwargs)
 
         return self
@@ -382,7 +393,7 @@ class ClassifierUnweightedSkLearnWrapper(ClassifierSkLearnWrapper):
         y_train: Union[torch.Tensor, Dataset],
         *args,
         sample_weight: Optional[torch.Tensor] = None,
-        **kwargs
+        **kwargs,
     ):
         """Fits the model on the training data.
 
@@ -463,7 +474,7 @@ class RegressionSkLearnWrapper(Model):
         y_train: Union[torch.Tensor, Dataset],
         *args,
         sample_weight: Optional[torch.Tensor] = None,
-        **kwargs
+        **kwargs,
     ):
         """Fits the model on the training data.
 

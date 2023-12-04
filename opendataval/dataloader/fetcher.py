@@ -51,6 +51,10 @@ class DataFetcher:
         The indices of the original data set used to make the training data set.
     noisy_train_indices : np.ndarray[int]
         The indices of training data points with noise added to them.
+    covar : Dataset | np.ndarray
+        Covariate dataset a dataset function
+    lables : np.ndarray
+        Corresponding labels for covariates from a dataset function
     [x/y]_[train/valid/test] : np.ndarray
         Access to the raw split of the [covariate/label] [train/valid/test] data set
         prior being transformed into a tensor. Useful for adding noise to functions.
@@ -81,19 +85,34 @@ class DataFetcher:
     ):
         if dataset_name not in Register.Datasets:
             raise KeyError(
-                "Must register data set in register_dataset."
+                "Must register data set in register_dataset. "
                 "Ensure the data set is imported and optional dependencies installed."
+                f"{dataset_name=}"
             )
 
+        print(f"Getting dataset from Register.Datasets[{dataset_name}]")
         self.dataset = Register.Datasets[dataset_name]
         self.one_hot = self.dataset.one_hot
 
         if self.dataset.presplit:
+            print("Running the presplit", self.dataset.presplit)
             self._presplit_data(*self.dataset.load_data(cache_dir, force_download))
         else:
-            self._add_data(*self.dataset.load_data(cache_dir, force_download))
+            print(
+                "Init _add_data",
+                {
+                    "dataset_name": dataset_name,
+                },
+            )
+            print("Running _add_data from", cache_dir)
+            output = self.dataset.load_data(cache_dir, force_download)
+            print("this is the output", output[0])
+            self._add_data(*output)
 
         self.random_state = check_random_state(random_state)
+
+    def __getitem__(self, index: int):
+        return self.x_train[index], self.y_train[index]
 
     def _presplit_data(self, x_train, x_valid, x_test, y_train, y_valid, y_test):
         if not len(x_train) == len(y_train):
@@ -116,10 +135,14 @@ class DataFetcher:
         self.valid_indices = np.fromiter(range(tr, tr + val), dtype=int)
         self.test_indices = np.fromiter(range(tr + val, tr + val + test), dtype=int)
 
-    def _add_data(self, covar, labels):
+    def _add_data(self, covar, labels, original_data=None):
         if not len(covar) == len(labels):
-            raise ValueError("Covariates and Labels must be of same length.")
-        self.covar, self.labels = covar, labels
+            raise ValueError(
+                f"""Covariates and Labels must be of same length. covar={
+                             len(covar)} labels={len(labels)}"""
+            )
+        print("Adding covar", len(covar), len(labels))
+        self.covar, self.labels, self.original_data = covar, labels, original_data
 
     @staticmethod
     def datasets_available() -> set[str]:
@@ -136,7 +159,7 @@ class DataFetcher:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Optional[Callable[[Self, Any, ...], dict[str, Any]]] = None,
+        add_noise: Optional[Callable[[Self, Any], dict[str, Any]]] = None,
         noise_kwargs: Optional[dict[str, Any]] = None,
     ):
         """Create, split, and add noise to DataFetcher from input arguments."""
@@ -144,6 +167,14 @@ class DataFetcher:
 
         split_types = (type(train_count), type(valid_count), type(test_count))
         if split_types == (int, int, int):
+            print(
+                "This is the dataset split",
+                {
+                    "train_count": train_count,
+                    "valid_count": valid_count,
+                    "test_count": test_count,
+                },
+            )
             return (
                 cls(dataset_name, cache_dir, force_download, random_state)
                 .split_dataset_by_count(train_count, valid_count, test_count)
@@ -190,6 +221,7 @@ class DataFetcher:
             Input covariates and labels are of different length, no 1-to-1 mapping.
         """
         fetcher = cls.__new__(cls)
+        print("from_data was calledd", len(labels))
         fetcher._add_data(covar, labels)
 
         fetcher.one_hot = one_hot
@@ -299,6 +331,14 @@ class DataFetcher:
         if hasattr(self, "covar"):
             return len(self.covar)
         else:
+            print(
+                "Inside split",
+                {
+                    "x_train": len(self.x_train),
+                    "x_valid": len(self.x_valid),
+                    "x_test": len(self.x_test),
+                },
+            )
             return len(self.x_train) + len(self.x_valid) + len(self.x_test)
 
     def split_dataset_by_prop(
@@ -344,16 +384,37 @@ class DataFetcher:
         if hasattr(self, "dataset") and self.dataset.presplit:
             warnings.warn("Dataset is already presplit, no need to split data.")
             return self
-
+        print(
+            "this is the dataset split",
+            {
+                "train_count": train_count,
+                "valid_count": valid_count,
+                "test_count": test_count,
+                "num_points_in_class": self.num_points,
+            },
+        )
         if sum((train_count, valid_count, test_count)) > self.num_points:
+            print(
+                "the sum is ",
+                sum((train_count, valid_count, test_count)),
+                "numpoints=",
+                self.num_points,
+            )
             raise ValueError(
-                f"Split totals must be < {self.num_points=} and of the same type: "
+                f"""Split totals must be <{
+                    self.num_points}, but is {sum((train_count, valid_count, test_count))} and of the same type: """
             )
         sp = list(accumulate((train_count, valid_count, test_count)))
 
         # Extra underscore to unpack any remainders
         idx = self.random_state.permutation(self.num_points)
         self.train_indices, self.valid_indices, self.test_indices, _ = np.split(idx, sp)
+
+        # print("These are the indices to create a split", {
+        #     "train_indices": self.train_indices,
+        #     "valid_indices": self.valid_indices,
+        #     "test_indices": self.test_indices,
+        # })
 
         if isinstance(self.covar, Dataset):
             self.x_train = Subset(self.covar, self.train_indices)
@@ -407,7 +468,8 @@ class DataFetcher:
         for index in idx:
             if not (0 <= index < len(self.covar)) or index in seen:
                 raise ValueError(
-                    f"{index=} is repeated or is out of range for {self.num_points=}"
+                    f"""{index=} is repeated or is out of range for {
+                        self.num_points=}"""
                 )
             seen.add(index)
 
@@ -432,7 +494,7 @@ class DataFetcher:
 
     def noisify(
         self,
-        add_noise: Union[Callable[[Self, Any, ...], dict[str, Any]], str, None] = None,
+        add_noise: Union[Callable[[Self, Any], dict[str, Any]], str, None] = None,
         *noise_args,
         **noise_kwargs,
     ):
@@ -514,6 +576,8 @@ class DataFetcher:
 
         def generate_data(covariates, labels):
             data = CatDataset(covariates, labels)
+            print("GENERATEING NEW CATDATASET")
+            print("labels + covarate", {"labels": labels, "covariates": covariates})
             for cov, lab in DataLoader(data, batch_size=1, shuffle=False):
                 yield from np.hstack((cov, lab))
 

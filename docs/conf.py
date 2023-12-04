@@ -8,7 +8,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-import opendataval  # noqa: E402
+import opendataval.__init__2 as __init__2  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -18,7 +18,7 @@ copyright = "2023, OpenDataVal"
 author = "OpenDataVal"
 
 
-version = opendataval.__version__
+version = __init__2.__version__
 version = re.sub(r"(\.dev\d+).*?$", r"\1", version)
 
 # -- General configuration ---------------------------------------------------

@@ -3,7 +3,8 @@ import time
 from datetime import timedelta
 from enum import Enum
 from functools import update_wrapper
-from typing import Callable, Generic, Optional, TypeVar
+from itertools import islice
+from typing import Callable, Generic, Optional, TypeVar, Any
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,15 @@ def set_random_state(random_state: Optional[RandomState] = None) -> RandomState:
     torch.manual_seed(check_random_state(random_state).tomaxint())
     random_state = check_random_state(random_state)
     return random_state
+
+
+def batched(it, n=1):
+    if n < 1:
+        raise ValueError("n must be at least one")
+
+    it = iter(it)  # without this step, always resets
+    while batch := tuple(islice(it, n)):
+        yield batch
 
 
 class StrEnum(str, Enum):
@@ -62,7 +72,7 @@ X, Y = TypeVar("X"), TypeVar("Y")
 
 
 class wrapper(str, Generic[X, Y]):
-    def __new__(cls, function: Callable[[X, ...], Y], name: Optional[str] = None):
+    def __new__(cls, function: Callable[[X, Any], Y], name: Optional[str] = None):
         """Wrapper is a walks and talks like a str but can be called with the func."""
         out = str.__new__(cls, function.__name__ if name is None else name)
         out.function = function
@@ -80,7 +90,7 @@ class FuncEnum(StrEnum):
     """Creating a Enum of functions identifiable by a string."""
 
     @staticmethod
-    def wrap(func: Callable[[X, ...], Y], name: Optional[str] = None) -> wrapper[X, Y]:
+    def wrap(func: Callable[[X, Any], Y], name: Optional[str] = None) -> wrapper[X, Y]:
         """Function wrapper: class functions are seen as methods and str conversion."""
         return wrapper(func, name)
 

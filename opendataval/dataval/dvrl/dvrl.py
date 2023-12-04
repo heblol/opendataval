@@ -64,6 +64,13 @@ class DVRL(DataEvaluator, ModelMixin):
         self.hidden_dim = hidden_dim
         self.layer_number = layer_number
         self.comb_dim = comb_dim
+        device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
         self.device = device
 
         # Training parameters
@@ -98,6 +105,8 @@ class DVRL(DataEvaluator, ModelMixin):
         self.y_train = y_train
         self.x_valid = x_valid
         self.y_valid = y_valid
+
+        print("this is the x_train", x_train)
 
         self.num_points, [*self.feature_dim] = len(x_train), x_train[0].shape
         [*self.label_dim] = (1,) if self.y_train.ndim == 1 else self.y_train[0].shape
@@ -169,10 +178,21 @@ class DVRL(DataEvaluator, ModelMixin):
         criterion = DveLoss(threshold=self.threshold)
 
         gen = torch.Generator(self.device).manual_seed(self.random_state.tomaxint())
+
+        device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+
         cpu_gen = torch.Generator("cpu").manual_seed(self.random_state.tomaxint())
 
         data = CatDataset(self.x_train, self.y_train, self.y_pred_diff)
         rs = RandomSampler(data, True, self.rl_epochs * batch_size, generator=cpu_gen)
+
+        print("I am using the dataloader here!")
         dataloader = DataLoader(
             data,
             batch_size,
@@ -183,6 +203,8 @@ class DVRL(DataEvaluator, ModelMixin):
             persistent_workers=num_workers > 0,
         )
 
+        print("After the data loader")
+
         for x_batch, y_batch, y_hat_batch in tqdm.tqdm(dataloader):
             # Moves tensors to actual device
             x_batch_ve = x_batch.to(device=self.device)
@@ -191,17 +213,20 @@ class DVRL(DataEvaluator, ModelMixin):
 
             optimizer.zero_grad()
 
+            print("just set zero grad")
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
+            print("predicted dataval", pred_dataval)
 
             # Samples the selection probability
             select_prob = torch.bernoulli(pred_dataval, generator=gen)
+            print("selected pro", select_prob)
             if select_prob.sum().item() == 0:  # Exception (select probability is 0)
                 pred_dataval = 0.5 * torch.ones_like(pred_dataval, requires_grad=True)
                 select_prob = torch.bernoulli(pred_dataval, generator=gen)
-
             # Prediction and training
             new_model = self.pred_model.clone()
+            print("before fit model")
             new_model.fit(
                 x_batch,
                 y_batch,
@@ -209,6 +234,8 @@ class DVRL(DataEvaluator, ModelMixin):
                 sample_weight=select_prob.detach().cpu(),  # Expects cpu tensors
                 **kwargs,
             )
+
+            print("fitted model")
 
             # Reward computation
             y_valid_hat = new_model.predict(self.x_valid)
@@ -260,7 +287,6 @@ class DVRL(DataEvaluator, ModelMixin):
 
         # Estimates data value
         with torch.no_grad():  # No dropout layers so no need to set to eval
-
             data = CatDataset(self.x_train, self.y_train, y_hat)
             for x_batch, y_batch, y_hat_batch in DataLoader(
                 data, batch_size=self.rl_batch_size, shuffle=False

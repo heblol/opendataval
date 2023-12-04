@@ -50,6 +50,7 @@ artificial noise to some datasets. Create your own `DataEvaluator` to top the [l
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
 ## :hourglass_flowing_sand: Installation options
+It is highly reccomended to use a virtual environment for `opendataval`. Check out [conda](https://docs.conda.io/en/latest/)!
 1. Install with pip
     ```sh
     pip install opendataval
@@ -73,25 +74,28 @@ artificial noise to some datasets. Create your own `DataEvaluator` to top the [l
 To set up an experiment on DataEvaluators. Feel free to change the source code as needed for a project.
 
 ```python
+import opendataval
 from opendataval.experiment import ExperimentMediator
+from opendataval.dataval import DataOob
+from opendataval.experiment import discover_corrupted_sample, noisy_detection
 
 exper_med = ExperimentMediator.model_factory_setup(
     dataset_name='iris',
     force_download=False,
-    train_count=100,
+    train_count=50,
     valid_count=50,
     test_count=50,
     model_name='ClassifierMLP',
     train_kwargs={'epochs': 5, 'batch_size': 20},
 )
-list_of_data_evaluators = [ChildEvaluator(), ...]  # Define evaluators here
+list_of_data_evaluators = [DataOob()]  # Define evaluators here
 eval_med = exper_med.compute_data_values(list_of_data_evaluators)
 
 # Runs a discover the noisy data experiment for each DataEvaluator and plots
 data, fig = eval_med.plot(discover_corrupted_sample)
 
 # Runs non-plottable experiment
-data = eval_method.evaluate(noisy_detection)
+data = eval_med.evaluate(noisy_detection)
 ```
 
 ### :computer: CLI
@@ -267,5 +271,5 @@ If you found the library or the paper useful, please cite us!
 [citation-shield]:https://img.shields.io/badge/Cite-Us-blue.svg?style=for-the-badge
 [citation-url]: #cite-us
 <!-- Coverage Comment:Begin -->
-[coverage_badge]: https://img.shields.io/badge/Coverage-80%25-green.svg?style=for-the-badge
+[coverage_badge]: https://img.shields.io/badge/Coverage-79%25-yellow.svg?style=for-the-badge
 <!-- Coverage Comment:End -->

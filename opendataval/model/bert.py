@@ -51,7 +51,8 @@ class BertClassifier(Model, nn.Module):
     ):
         super().__init__()
 
-        self.tokenizer = DistilBertTokenizerFast.from_pretrained(pretrained_model_name)
+        self.tokenizer = DistilBertTokenizerFast.from_pretrained(
+            pretrained_model_name)
         self.bert = DistilBertModel.from_pretrained(pretrained_model_name)
 
         self.num_classes = num_classes
@@ -98,7 +99,8 @@ class BertClassifier(Model, nn.Module):
         torch.Tensor
             Predicted labels for the classification problem
         """
-        hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask)[0]
+        hidden_states = self.bert(
+            input_ids=input_ids, attention_mask=attention_mask)[0]
         pooled_output = hidden_states[:, 0]
         y_hat = self.classifier(pooled_output)
 
@@ -200,7 +202,7 @@ class BertClassifier(Model, nn.Module):
         self.train()
         for _ in range(int(epochs)):
             for input_batch, y_batch, *weights in DataLoader(
-                dataset, batch_size, shuffle=True, pin_memory=True
+                dataset, batch_size, shuffle=False, pin_memory=True
             ):
                 input_batch = [t.to(self.bert.device) for t in input_batch]
                 y_batch = y_batch.to(self.bert.device)
@@ -240,7 +242,8 @@ class BertClassifier(Model, nn.Module):
         self.eval()
         # Return type of tokenizer is a data set so we are cheating here.
         bert_inputs = self.tokenize(x)
-        bert_batch = [t.to(device=self.bert.device) for t in bert_inputs.tensors]
+        bert_batch = [t.to(device=self.bert.device)
+                      for t in bert_inputs.tensors]
 
         y_hat = self.__call__(*bert_batch)
         return y_hat

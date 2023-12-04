@@ -125,7 +125,9 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str] = mix_labels,
+        add_noise: Union[
+            Callable[[DataFetcher], dict[str, Any]], str, None
+        ] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         model_name: Optional[str] = None,
@@ -196,6 +198,8 @@ class ExperimentMediator:
         """
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
 
+        print("Creating fetcher with dataset name", dataset_name)
+
         fetcher = DataFetcher.setup(
             dataset_name=dataset_name,
             cache_dir=cache_dir,
@@ -217,9 +221,14 @@ class ExperimentMediator:
         # Prints base line performance
         model = pred_model.clone()
         x_train, y_train, *_, x_test, y_test = fetcher.datapoints
+        print("-" * 10)
+        print("These are the y_train points", pd.DataFrame(y_train).value_counts())
+        print(x_train[0])
+        print("-" * 10)
         train_kwargs = {} if train_kwargs is None else train_kwargs
-
         model.fit(x_train, y_train, **train_kwargs)
+
+        print("After model model fit in the model_factory_setup")
         if metric_name is None:
             metric = Metrics.ACCURACY if fetcher.one_hot else Metrics.NEG_MSE
         else:
@@ -249,7 +258,10 @@ class ExperimentMediator:
         kwargs = {**kwargs, **self.train_kwargs}
         for data_val in data_evaluators:
             try:
+                print(f"calculating datavalues for {data_val!s}")
                 start_time = time.perf_counter()
+
+                print("ivo: appending evaluator")
 
                 self.data_evaluators.append(
                     data_val.train(
@@ -268,22 +280,22 @@ class ExperimentMediator:
                     raise ex
 
                 warnings.warn(
-                    f"""
-                    An error occured during training, however training all evaluators
-                    takes a long time, so we will be ignoring the evaluator:
-                    {data_val!s} and proceeding.
-
-                    The error is as follows: {ex!s}
-                    """,
-                    stacklevel=10,
+                    f"""Skipping data evaluator {
+                              data_val} because of error: {ex!s}"""
                 )
+
+                # warnings.warn(
+                #     f"""
+                #     An error occured during training, however training all evaluators
+                #     takes a long time, so we will be ignoring the evaluator:
+                #     {data_val!s} and proceeding. The error is as follows: {ex!s}""")
 
         self.num_data_eval = len(self.data_evaluators)
         return self
 
     def evaluate(
         self,
-        exper_func: Callable[[DataEvaluator, DataFetcher, ...], dict[str, Any]],
+        exper_func: Callable[[DataEvaluator, DataFetcher, Any], dict[str, Any]],
         save_output: bool = False,
         **exper_kwargs,
     ) -> pd.DataFrame:
@@ -334,7 +346,7 @@ class ExperimentMediator:
 
     def plot(
         self,
-        exper_func: Callable[[DataEvaluator, DataFetcher, Axes, ...], dict[str, Any]],
+        exper_func: Callable[[DataEvaluator, DataFetcher, Axes], dict[str, Any]],
         figure: Optional[Figure] = None,
         row: Optional[int] = None,
         col: int = 2,

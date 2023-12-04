@@ -53,11 +53,13 @@ def noisy_detection(
     """
     data_values = evaluator.data_values
     noisy_train_indices = (
-        fetcher.noisy_train_indices if isinstance(fetcher, DataFetcher) else indices
+        fetcher.noisy_train_indices if isinstance(
+            fetcher, DataFetcher) else indices
     )
 
     unvaluable, _ = oned_twonn_clustering(data_values.flatten())
-    f1_kmeans_label = f1_score(unvaluable, noisy_train_indices, len(data_values))
+    f1_kmeans_label = f1_score(
+        unvaluable, noisy_train_indices, len(data_values))
 
     return {"kmeans_f1": f1_kmeans_label}
 
@@ -135,7 +137,6 @@ def remove_high_low(
     train_kwargs = train_kwargs if train_kwargs is not None else {}
 
     for bin_index in range(0, num_points, num_period):
-
         # Removing least valuable samples first
         most_valuable_indices = sorted_value_list[bin_index:]
 
@@ -239,11 +240,16 @@ def discover_corrupted_sample(
     data_values = evaluator.data_values
 
     num_points = len(x_train)
-    num_period = max(round(num_points * percentile), 5)  # Add at least 5 per bin
+    num_period = max(round(num_points * percentile),
+                     5)  # Add at least 5 per bin
     num_bins = int(num_points // num_period) + 1
 
-    sorted_value_list = np.argsort(data_values, kind="stable")  # Order descending
+    sorted_value_list = np.argsort(
+        data_values, kind="stable")  # Order descending
     noise_rate = len(noisy_train_indices) / len(data_values)
+
+    print(
+        f"num_points={num_points} num_period={num_period} num_bins={num_bins}")
 
     # Output initialization
     found_rates = []
@@ -252,7 +258,8 @@ def discover_corrupted_sample(
     for bin_index in range(0, num_points + num_period, num_period):
         # from low to high data values
         found_rates.append(
-            len(np.intersect1d(sorted_value_list[:bin_index], noisy_train_indices))
+            len(np.intersect1d(
+                sorted_value_list[:bin_index], noisy_train_indices))
             / len(noisy_train_indices)
         )
 
@@ -263,11 +270,16 @@ def discover_corrupted_sample(
     if plot is not None:
         # Corrupted label discovery results (dvrl, optimal, random)
         y_dv = found_rates[:num_bins]
-        y_opt = [min((i / num_bins / noise_rate, 1.0)) for i in range(len(found_rates))]
+        y_opt = [min((i / num_bins / noise_rate, 1.0))
+                 for i in range(len(found_rates))]
         y_random = x_axis
 
         eval_results["optimal"] = y_opt
         eval_results["random"] = y_random
+
+        print(f"x_axis={x_axis} found_rates={found_rates} num_bins={num_bins}")
+
+        print("x", x_axis, y_dv, y_opt, y_random)
 
         plot.plot(x_axis, y_dv, "o-")
         plot.plot(x_axis, y_opt, "--")
@@ -284,7 +296,7 @@ def discover_corrupted_sample(
 
 def save_dataval(
     evaluator: DataEvaluator,
-    fetcher: DataFetcher = None,
+    fetcher: Optional[DataFetcher] = None,
     indices: Optional[list[int]] = None,
     output_path: Optional[Path] = None,
 ):
@@ -417,7 +429,8 @@ def increasing_bin_removal(
         plot.set_title(str(evaluator))
 
         divider = make_axes_locatable(plot)
-        frac_inspected_plot = divider.append_axes("bottom", size="40%", pad="5%")
+        frac_inspected_plot = divider.append_axes(
+            "bottom", size="40%", pad="5%")
 
         frac_inspected_plot.fill_between(x_axis, frac_datapoints_explored)
         frac_inspected_plot.set_xlabel("Data Values Threshold")

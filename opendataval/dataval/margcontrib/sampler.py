@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, ClassVar, Optional, TypeVar
+from typing import Any, Callable, ClassVar, Optional, TypeVar
 
 import numpy as np
 import torch
@@ -21,7 +21,7 @@ class Sampler(ABC, ReprMixin):
     of caching computed marginal contributions if given a `"cache_name"`.
     """
 
-    def set_evaluator(self, value_func: Callable[[list[int], ...], float]):
+    def set_evaluator(self, value_func: Callable[[list[int], Any], float]):
         """Sets the evaluator function to evaluate the utility of a coalition
 
 
