@@ -284,6 +284,10 @@ class ExperimentMediator:
                               data_val} because of error: {ex!s}"""
                 )
 
+                raise Exception(
+                    f"ivo: Error inside data evaluator {data_val} because of error {ex!s}"
+                )
+
                 # warnings.warn(
                 #     f"""
                 #     An error occured during training, however training all evaluators
