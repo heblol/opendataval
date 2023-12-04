@@ -141,6 +141,8 @@ class TorchClassMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset, batch_size, shuffle=False, pin_memory=True
             ):
+                print("X-batch", x_batch)
+                print("Y-batch", y_batch)
                 x_batch = torch.tensor(x_batch)
                 y_batch = torch.tensor(y_batch)
 

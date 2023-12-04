@@ -125,7 +125,9 @@ class ExperimentMediator:
         train_count: Union[int, float] = 0,
         valid_count: Union[int, float] = 0,
         test_count: Union[int, float] = 0,
-        add_noise: Union[Callable[[DataFetcher], dict[str, Any]], str, None] = mix_labels,
+        add_noise: Union[
+            Callable[[DataFetcher], dict[str, Any]], str, None
+        ] = mix_labels,
         noise_kwargs: Optional[dict[str, Any]] = None,
         random_state: Optional[RandomState] = None,
         model_name: Optional[str] = None,
@@ -218,7 +220,11 @@ class ExperimentMediator:
         model = pred_model.clone()
         x_train, y_train, *_, x_test, y_test = fetcher.datapoints
         print("-" * 10)
-        print("These are the y_train points", pd.DataFrame(y_train).value_counts())
+        print(
+            "These are the y_train points",
+            pd.DataFrame(y_train).value_counts()
+        )
+        print(x_train.head())
         print("-" * 10)
         train_kwargs = {} if train_kwargs is None else train_kwargs
         model.fit(x_train, y_train, **train_kwargs)
