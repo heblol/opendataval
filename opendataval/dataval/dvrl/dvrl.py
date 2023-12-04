@@ -64,14 +64,14 @@ class DVRL(DataEvaluator, ModelMixin):
         self.hidden_dim = hidden_dim
         self.layer_number = layer_number
         self.comb_dim = comb_dim
-        device = torch.device(
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
-        )
-        self.device = "cpu"
+        # device = torch.device(
+        #     "cuda"
+        #     if torch.cuda.is_available()
+        #     else "mps"
+        #     if torch.backends.mps.is_available()
+        #     else "cpu"
+        # )
+        self.device = torch.device("cpu")
 
         # Training parameters
         self.rl_epochs = rl_epochs
