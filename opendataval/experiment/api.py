@@ -227,6 +227,7 @@ class ExperimentMediator:
         print("-" * 10)
         train_kwargs = {} if train_kwargs is None else train_kwargs
         model.fit(x_train, y_train, **train_kwargs)
+
         print("After model model fit in the model_factory_setup")
         if metric_name is None:
             metric = Metrics.ACCURACY if fetcher.one_hot else Metrics.NEG_MSE
