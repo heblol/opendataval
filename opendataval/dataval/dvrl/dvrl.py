@@ -219,8 +219,8 @@ class DVRL(DataEvaluator, ModelMixin):
             new_model = self.pred_model.clone()
             print("before fit model")
             print(
-                "x_batch": x_batch,
-                "y_batch": y_batch
+                {"x_batch": x_batch,
+                "y_batch": y_batch}
             )
             new_model.fit(
                 x_batch,
