@@ -141,14 +141,14 @@ class TorchClassMixin(TorchModel):
             for x_batch, y_batch, *weights in DataLoader(
                 dataset, batch_size, shuffle=False, pin_memory=True
             ):
-                print("X-batch", x_batch)
-                print("Y-batch", y_batch)
-                x_batch = torch.tensor(x_batch)
-                y_batch = torch.tensor(y_batch)
+                # print("X-batch", x_batch)
+                # print("Y-batch", y_batch)
+                # x_batch = torch.tensor(x_batch)
+                # y_batch = torch.tensor(y_batch)
 
                 # Moves data to correct device
-                # x_batch = x_batch.to(device=self.device)
-                # y_batch = y_batch.to(device=self.device)
+                x_batch = x_batch.to(device=self.device)
+                y_batch = y_batch.to(device=self.device)
 
                 optimizer.zero_grad()
                 outputs = self.__call__(x_batch)
