@@ -194,7 +194,7 @@ class DVRL(DataEvaluator, ModelMixin):
             persistent_workers=num_workers > 0,
         )
 
-        print("After the data loader")
+        print("After the data loader", {"batch_size": batch_size})
 
         for x_batch, y_batch, y_hat_batch in tqdm.tqdm(dataloader):
             # Moves tensors to actual device
@@ -204,7 +204,11 @@ class DVRL(DataEvaluator, ModelMixin):
 
             optimizer.zero_grad()
 
-            print("just set zero grad")
+            print("just set zero grad", {
+                "x_batch_ve": x_batch_ve,
+                "y_batch_ve": y_batch_ve,
+                "y_hat_batch_ve": y_hat_batch_ve
+            })
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
             print("predicted dataval", pred_dataval)
