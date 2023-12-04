@@ -261,6 +261,8 @@ class ExperimentMediator:
                 print(f"calculating datavalues for {data_val!s}")
                 start_time = time.perf_counter()
 
+                print("ivo: appending evaluator")
+
                 self.data_evaluators.append(
                     data_val.train(
                         self.fetcher, self.pred_model, self.metric, *args, **kwargs

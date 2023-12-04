@@ -203,6 +203,8 @@ class DVRL(DataEvaluator, ModelMixin):
             persistent_workers=num_workers > 0,
         )
 
+        print("After the data loader")
+
         for x_batch, y_batch, y_hat_batch in tqdm.tqdm(dataloader):
             # Moves tensors to actual device
             x_batch_ve = x_batch.to(device=self.device)
@@ -211,17 +213,20 @@ class DVRL(DataEvaluator, ModelMixin):
 
             optimizer.zero_grad()
 
+            print("just set zero grad")
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
+            print("predicted dataval", pred_dataval)
 
             # Samples the selection probability
             select_prob = torch.bernoulli(pred_dataval, generator=gen)
+            print("selected pro", select_prob)
             if select_prob.sum().item() == 0:  # Exception (select probability is 0)
                 pred_dataval = 0.5 * torch.ones_like(pred_dataval, requires_grad=True)
                 select_prob = torch.bernoulli(pred_dataval, generator=gen)
-
             # Prediction and training
             new_model = self.pred_model.clone()
+            print("before fit model")
             new_model.fit(
                 x_batch,
                 y_batch,
@@ -229,6 +234,8 @@ class DVRL(DataEvaluator, ModelMixin):
                 sample_weight=select_prob.detach().cpu(),  # Expects cpu tensors
                 **kwargs,
             )
+
+            print("fitted model")
 
             # Reward computation
             y_valid_hat = new_model.predict(self.x_valid)
