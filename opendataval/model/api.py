@@ -133,8 +133,6 @@ class TorchClassMixin(TorchModel):
         criterion = F.binary_cross_entropy if self.num_classes == 2 else F.cross_entropy
         dataset = CatDataset(x_train, y_train, sample_weight)
 
-        print("ivo This is the original train data", type(x_train), type(y_train))
-
         self.train()
         for _ in range(int(epochs)):
             # *weights helps check if we passed weights into the Dataloader
