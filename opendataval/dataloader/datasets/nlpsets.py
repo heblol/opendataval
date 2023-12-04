@@ -93,7 +93,7 @@ def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
             print("EMBEDDING", nlp_embeddings)
             return nlp_embeddings, labels[subset[: len(nlp_embeddings)]]
 
-        print("Embedding path does NOT exist.", embed_path)
+        print("Embedding path does NOT exist.", embed_path, {"force_download":force_download})
         labels = labels[subset[:dataset_size]]
         entries = [entry for entry in dataset[subset[:dataset_size]]]
 
