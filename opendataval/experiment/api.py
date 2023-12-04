@@ -198,6 +198,8 @@ class ExperimentMediator:
         """
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
 
+        print("Creating fetcher with dataset name", dataset_name)
+
         fetcher = DataFetcher.setup(
             dataset_name=dataset_name,
             cache_dir=cache_dir,
