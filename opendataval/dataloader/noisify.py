@@ -69,6 +69,8 @@ def mix_labels(fetcher: DataFetcher, noise_rate: float = 0.2) -> dict[str, np.nd
     train_noise = (train_mapping[train_replace] + train_shift) % len(train_classes)
     valid_noise = (valid_mapping[valid_replace] + valid_shift) % len(valid_classes)
 
+    print("ADDING NOISE?", train_noise, valid_noise)
+
     y_train[train_replace] = train_classes[train_noise]
     y_valid[valid_replace] = valid_classes[valid_noise]
 
