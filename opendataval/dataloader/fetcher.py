@@ -92,7 +92,7 @@ class DataFetcher:
 
         self.dataset = Register.Datasets[dataset_name]
         self.one_hot = self.dataset.one_hot
-        self.noisy_train_indices = None
+        self.noisy_train_indices: np.ndarray = np.array([])
 
         if self.dataset.presplit:
             self._presplit_data(*self.dataset.load_data(cache_dir, force_download))
