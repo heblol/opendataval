@@ -198,8 +198,6 @@ class ExperimentMediator:
         """
         noise_kwargs = {} if noise_kwargs is None else noise_kwargs
 
-        print("Creating fetcher with dataset name", dataset_name)
-
         fetcher = DataFetcher.setup(
             dataset_name=dataset_name,
             cache_dir=cache_dir,
@@ -221,20 +219,15 @@ class ExperimentMediator:
         # Prints base line performance
         model = pred_model.clone()
         x_train, y_train, *_, x_test, y_test = fetcher.datapoints
-        print("-" * 10)
-        print("These are the y_train points", pd.DataFrame(y_train).value_counts())
-        print(x_train[0])
-        print("-" * 10)
+
         train_kwargs = {} if train_kwargs is None else train_kwargs
         model.fit(x_train, y_train, **train_kwargs)
 
-        print("After model model fit in the model_factory_setup")
         if metric_name is None:
             metric = Metrics.ACCURACY if fetcher.one_hot else Metrics.NEG_MSE
         else:
             metric = Metrics(metric_name)
         perf = metric(y_test, model.predict(x_test).cpu())
-        print(f"Base line model {metric_name=}: {perf=}")
 
         return cls(
             fetcher=fetcher,
