@@ -401,23 +401,7 @@ class ExperimentMediator:
             data_eval_perf[str(data_val)] = eval_resp
 
         # index=[DataEvaluator.DataEvaluator]
-
-        # Assuming df_resp is your DataFrame
-        # Replace 'Column1', 'Column2', and 'Column3' with your actual column names
         df_resp = pd.DataFrame.from_dict(data_eval_perf, "index")
-
-        for index, row in df_resp.iterrows():
-            lengths = [
-                len(row["remove_least_influential_first_Metrics.ACCURACY"]),
-                len(row["remove_most_influential_first_Metrics.ACCURACY"]),
-                len(row["axis"]),
-               
-            ]
-            if len(set(lengths)) != 1:
-                print(f"Rows {index} have different lengths in columns: {lengths}")
-
-        print("Just before exploding error", df_resp.columns, df_resp.head())
-
         df_resp = df_resp.explode(list(df_resp.columns))
 
         if save_output:
