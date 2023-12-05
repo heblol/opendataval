@@ -90,23 +90,13 @@ class DataFetcher:
                 f"{dataset_name=}"
             )
 
-        print(f"Getting dataset from Register.Datasets[{dataset_name}]")
         self.dataset = Register.Datasets[dataset_name]
         self.one_hot = self.dataset.one_hot
 
         if self.dataset.presplit:
-            print("Running the presplit", self.dataset.presplit)
             self._presplit_data(*self.dataset.load_data(cache_dir, force_download))
         else:
-            print(
-                "Init _add_data",
-                {
-                    "dataset_name": dataset_name,
-                },
-            )
-            print("Running _add_data from", cache_dir)
             output = self.dataset.load_data(cache_dir, force_download)
-            print("this is the output", output[0])
             self._add_data(*output)
 
         self.random_state = check_random_state(random_state)
@@ -141,7 +131,6 @@ class DataFetcher:
                 f"""Covariates and Labels must be of same length. covar={
                              len(covar)} labels={len(labels)}"""
             )
-        print("Adding covar", len(covar), len(labels))
         self.covar, self.labels, self.original_data = covar, labels, original_data
 
     @staticmethod
@@ -167,14 +156,6 @@ class DataFetcher:
 
         split_types = (type(train_count), type(valid_count), type(test_count))
         if split_types == (int, int, int):
-            print(
-                "This is the dataset split",
-                {
-                    "train_count": train_count,
-                    "valid_count": valid_count,
-                    "test_count": test_count,
-                },
-            )
             return (
                 cls(dataset_name, cache_dir, force_download, random_state)
                 .split_dataset_by_count(train_count, valid_count, test_count)
@@ -384,15 +365,7 @@ class DataFetcher:
         if hasattr(self, "dataset") and self.dataset.presplit:
             warnings.warn("Dataset is already presplit, no need to split data.")
             return self
-        print(
-            "this is the dataset split",
-            {
-                "train_count": train_count,
-                "valid_count": valid_count,
-                "test_count": test_count,
-                "num_points_in_class": self.num_points,
-            },
-        )
+
         if sum((train_count, valid_count, test_count)) > self.num_points:
             print(
                 "the sum is ",
