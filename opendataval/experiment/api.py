@@ -406,18 +406,20 @@ class ExperimentMediator:
         # Replace 'Column1', 'Column2', and 'Column3' with your actual column names
         df_resp = pd.DataFrame.from_dict(data_eval_perf, "index")
 
-        for index, row in df_resp.iterrows():
-            lengths = [
-                len(row["text"]),
-                len(row["ds_set"]),
-                len(row["synthethic"]),
-                len(row["DV_LABEL"]),
-                len(row["data_value"]),
-                len(row["original_index"]),
-                len(row["index_after_shuffling"]),
-            ]
-            if len(set(lengths)) != 1:
-                print(f"Rows {index} have different lengths in columns: {lengths}")
+        # for index, row in df_resp.iterrows():
+        #     lengths = [
+        #         len(row["text"]),
+        #         len(row["ds_set"]),
+        #         len(row["synthethic"]),
+        #         len(row["DV_LABEL"]),
+        #         len(row["data_value"]),
+        #         len(row["original_index"]),
+        #         len(row["index_after_shuffling"]),
+        #     ]
+        #     if len(set(lengths)) != 1:
+        #         print(f"Rows {index} have different lengths in columns: {lengths}")
+
+        print("Just before exploding error", df_resp.columns, df_resp.head())
 
         df_resp = df_resp.explode(list(df_resp.columns))
 
