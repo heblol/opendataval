@@ -90,8 +90,6 @@ def BertEmbeddings(
         )
         print("-" * 40)
         for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
-            print("this is the batch", batch)
-
             bert_inputs = tokenizer.__call__(
                 batch,
                 max_length=200,
