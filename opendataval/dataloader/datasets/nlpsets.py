@@ -62,7 +62,7 @@ def BertEmbeddings(
 
         print("This is the cache_dir", cache_dir)
 
-        if FolderDataset.exists(Path(f"{embed_path}/{embed_file_name}")):
+        if os.path.exists(Path(f"{embed_path}/{embed_file_name}")):
             print(f"# Found Cached dataset!", embed_path)
             nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
             return nlp_embeddings, labels
@@ -156,7 +156,7 @@ def BertEmbeddings(
 #         cache_dir: str, force_download: bool, *args, **kwargs
 #     ) -> tuple[torch.Tensor, np.ndarray]:
 #         from transformers import (
-#             DistilBertModel,
+#             DistilBertModel,00
 #             BertTokenizer,
 #             BertForSequenceClassification,
 #         )

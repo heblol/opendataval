@@ -402,7 +402,13 @@ class ExperimentMediator:
 
         # index=[DataEvaluator.DataEvaluator]
         df_resp = pd.DataFrame.from_dict(data_eval_perf, "index")
-        df_resp = df_resp.explode(list(df_resp.columns))
+
+        try:
+            df_resp = df_resp.explode(list(df_resp.columns))
+        except ValueError:
+            raise ValueError(
+                "Cannot explode df_res, probably because the number of elements should be multiplied by 0.05, without remainder."
+            )
 
         if save_output:
             self.save_output(f"{exper_func.__name__}.csv", df_resp)
