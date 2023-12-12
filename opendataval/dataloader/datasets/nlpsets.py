@@ -62,7 +62,7 @@ def BertEmbeddings(
 
         print("This is the cache_dir", cache_dir)
 
-        if FolderDataset.exists(Path(f"{embed_path}")):
+        if FolderDataset.exists(Path(f"{embed_path}/{embed_file_name}")):
             print(f"# Found Cached dataset!", embed_path)
             nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
             return nlp_embeddings, labels
@@ -348,7 +348,7 @@ def BertEmbeddings(
 
 
 @Register("bbc", cacheable=True, one_hot=True)
-def download_bbc(cache_dir: str, force_download: bool):
+def download_bbc(cache_dir: Path, force_download: bool):
     """Classification data set registered as ``"bbc"``.
 
     Predicts type of article from the article. Used in NLP data valuation tasks.
@@ -379,7 +379,7 @@ def download_bbc(cache_dir: str, force_download: bool):
 
 
 @Register("imdb", cacheable=True, one_hot=True)
-def download_imdb(cache_dir: str, force_download: bool):
+def download_imdb(cache_dir: Path, force_download: bool):
     """Binary category sentiment analysis data set registered as ``"imdb"``.
 
     Predicts sentiment analysis of the review as either positive (1) or negative (0).
@@ -405,7 +405,7 @@ def download_imdb(cache_dir: str, force_download: bool):
 
 
 @Register("illuminating", cacheable=True, one_hot=True)
-def download_imdb_illuminating(cache_dir: str, force_download: bool):
+def download_imdb_illuminating(cache_dir: Path, force_download: bool):
     """
 
     Paper of Philip: Illuminating blindspots
@@ -426,7 +426,7 @@ def download_imdb_illuminating(cache_dir: str, force_download: bool):
 
 @Register("illuminating-original-synthetic-combined", cacheable=True, one_hot=True)
 def download_imdb_illuminating_original_synthetic_combined(
-    cache_dir: str, force_download: bool
+    cache_dir: Path, force_download: bool
 ):
     """
 
