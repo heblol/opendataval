@@ -202,6 +202,8 @@ def BertEmbeddingsForSentenceTuple(
         # Initialize an empty list to store pooled embeddings
         pooled_embeddings_list = []
 
+        print("SIZE DATASET", len(dataset))
+
         print("-" * 40)
         print(
             "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
