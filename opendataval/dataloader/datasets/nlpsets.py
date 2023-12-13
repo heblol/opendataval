@@ -207,11 +207,16 @@ def BertEmbeddingsForSentenceTuple(
             "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
         )
         print("-" * 40)
-        for batch_num, batch in enumerate(tqdm(batched((text1, text2), n=batch_size))):
-            print("Single batch", batch[0], batch[1])
+        for batch_num, batch in enumerate(
+            tqdm(batched((text1, text2), n=batch_size))
+        ):
+            t1, t2 = batch
+
+            print("T1--- ", t1)
+            print("T1--- ", t2)
             bert_inputs = tokenizer.__call__(
-                batch[0],
-                batch[1],
+                t1,
+                t2,
                 max_length=200,
                 padding=True,
                 truncation=True,
