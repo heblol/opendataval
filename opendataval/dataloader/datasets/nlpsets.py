@@ -180,11 +180,11 @@ def BertEmbeddingsForSentenceTuple(
 
         print("This is the cache_dir", cache_dir)
 
-        if os.path.exists(Path(f"{embed_path}/{embed_file_name}")):
-            print(f"# Found Cached dataset!", embed_path)
-            nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
-            return nlp_embeddings, labels
-            # return FolderDataset.load(embed_path), labels
+        # if os.path.exists(Path(f"{embed_path}/{embed_file_name}")):
+        #     print(f"# Found Cached dataset!", embed_path)
+        #     nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
+        #     return nlp_embeddings, labels
+        #     # return FolderDataset.load(embed_path), labels
 
         # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
         device = torch.device(
