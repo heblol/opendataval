@@ -208,6 +208,7 @@ def BertEmbeddingsForSentenceTuple(
         )
         print("-" * 40)
         for batch_num, batch in enumerate(tqdm(batched((text1, text2), n=batch_size))):
+            print("Single batch", batch[0], batch[1])
             bert_inputs = tokenizer.__call__(
                 batch[0],
                 batch[1],
