@@ -134,7 +134,7 @@ def BertEmbeddings(
 
 
 def BertEmbeddingsForSentenceTuple(
-    func: Callable[[str, bool], tuple[Sequence[str], Sequence[str], np.ndarray]],
+    func: Callable[[str, bool], tuple[Sequence[str], np.ndarray]],
     batch_size: int = 128,
 ):
     """Convert text data into pooled embeddings with DistilBERT model.
@@ -171,9 +171,9 @@ def BertEmbeddingsForSentenceTuple(
         cache_dir = Path(cache_dir)
         # embed_path = cache_dir / f"{func.__name__}_embed"
 
-        text1, text2, labels = func(cache_dir, force_download, *args, **kwargs)
+        dataset, labels = func(cache_dir, force_download, *args, **kwargs)
 
-        print("These are text1, text2", text1, text2)
+        print("These are text1, text2", dataset)
 
         embed_file_name = f"{func.__name__}_{len(labels)}_embed.pt"
         embed_path = f"{cache_dir}/{func.__name__}_embed"
@@ -207,9 +207,7 @@ def BertEmbeddingsForSentenceTuple(
             "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
         )
         print("-" * 40)
-        for batch_num, batch in enumerate(
-            tqdm(batched((text1, text2), n=batch_size))
-        ):
+        for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
             t1, t2 = batch
 
             print("T1--- ", t1)

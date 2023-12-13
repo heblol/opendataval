@@ -2,7 +2,7 @@ import pickle
 from bisect import bisect_right
 from functools import cached_property, lru_cache
 from pathlib import Path
-from typing import Any, Callable, Optional, Sequence, TypeVar
+from typing import Any, Callable, Optional, Sequence, Tuple, TypeVar
 
 import torch
 from torch.utils.data import Dataset
@@ -106,6 +106,34 @@ class ListDataset(Dataset[T_co]):
 
     def __getitem__(self, index) -> list[T_co]:
         return self.data[index]
+
+
+class ListDatasetTuple(Dataset[T_co]):
+    """Data set wrapping a list.
+
+    ListDataset is primarily useful to when you want to pass back a list but also
+    want to get around the type checks of Datasets. This is intended to be used
+    with NLP data sets as the the axis 1 dimension is variable and BERT tokenizers take
+    inputs as only lists.
+
+    Parameters
+    ----------
+    input_list : Sequence[T_co]
+        Input sequence to be used as data set.
+    """
+
+    def __init__(self, text1: Sequence[T_co], text2: Sequence[T_co]):
+        self.text1 = text1
+        self.text2 = text2
+
+        if len(text1) != len(text2):
+            raise ValueError("Length text1 and text2 should be the same!")
+
+    def __len__(self):
+        return len(self.text1)
+
+    def __getitem__(self, index) -> Tuple[list[T_co], list[T_co]]:
+        return (self.text1[index], self.text2[index])
 
 
 def load_tensor(tensor_path: Path) -> torch.Tensor:
