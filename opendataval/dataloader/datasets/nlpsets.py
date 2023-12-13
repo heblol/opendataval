@@ -210,13 +210,13 @@ def BertEmbeddingsForSentenceTuple(
         )
         print("-" * 40)
         for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
-            t1, t2 = batch[0], batch[1]
+            text1, text2 = zip(*batch)
 
-            print("Batch size", len(t1), t2)
+            print("Batch size", len(text1[0]), text2[0])
 
             bert_inputs = tokenizer.__call__(
-                t1,
-                t2,
+                text1,
+                text2,
                 max_length=200,
                 padding=True,
                 truncation=True,
