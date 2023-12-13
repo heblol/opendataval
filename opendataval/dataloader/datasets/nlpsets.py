@@ -133,6 +133,125 @@ def BertEmbeddings(
     return wrapper
 
 
+def BertEmbeddingsForSentenceTuple(
+    func: Callable[[str, bool], tuple[Sequence[str], Sequence[str], np.ndarray]],
+    batch_size: int = 128,
+):
+    """Convert text data into pooled embeddings with DistilBERT model.
+
+    Given a data set with a list of string, such as NLP data set function (see below),
+    converts the sentences into strings. It is the equivalent of training a downstream
+    task with bert but all the BERT layers are frozen. It is advised to just
+    train with the raw strings with a BERT model located in models/bert.py or defining
+    your own model. DistilBERT is just a faster version of BERT
+
+    References
+    ----------
+    .. [1] J. Devlin, M.W. Chang, K. Lee, and K. Toutanova,
+        BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+        arXiv.org, 2018. Available: https://arxiv.org/abs/1810.04805.
+    .. [2] V. Sanh, L. Debut, J. Chaumond, and T. Wolf,
+        DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter
+        arXiv.org, 2019. Available: https://arxiv.org/abs/1910.01108.
+    """
+
+    def wrapper(
+        cache_dir: str, force_download: bool, *args, **kwargs
+    ) -> tuple[torch.Tensor, np.ndarray]:
+        from transformers import DistilBertModel, DistilBertTokenizerFast
+
+        BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
+
+        force_download = True
+
+        print("-" * 40)
+        print("# Running BertEmbeddings For Sentence Tuples")
+        print("-" * 40)
+
+        cache_dir = Path(cache_dir)
+        # embed_path = cache_dir / f"{func.__name__}_embed"
+
+        text1, text2, labels = func(cache_dir, force_download, *args, **kwargs)
+
+        print("These are text1, text2", text1, text2)
+
+        embed_file_name = f"{func.__name__}_{len(labels)}_embed.pt"
+        embed_path = f"{cache_dir}/{func.__name__}_embed"
+
+        print("This is the cache_dir", cache_dir)
+
+        if os.path.exists(Path(f"{embed_path}/{embed_file_name}")):
+            print(f"# Found Cached dataset!", embed_path)
+            nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
+            return nlp_embeddings, labels
+            # return FolderDataset.load(embed_path), labels
+
+        # Slow down on gpu vs cpu is quite substantial, uses gpu accel if available
+        device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+
+        tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
+        bert_model = DistilBertModel.from_pretrained(BERT_PRETRAINED_NAME).to(device)
+        folder_dataset = FolderDataset(embed_path)
+
+        # Initialize an empty list to store pooled embeddings
+        pooled_embeddings_list = []
+
+        print("-" * 40)
+        print(
+            "# Need to tokenize and embedd all datapoints. This can take a while with large datasets."
+        )
+        print("-" * 40)
+        for batch_num, batch in enumerate(tqdm(batched((text1, text2), n=batch_size))):
+            bert_inputs = tokenizer.__call__(
+                batch[0],
+                batch[1],
+                max_length=200,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+            ).to(device)
+            bert_inputs = {inp: bert_inputs[inp] for inp in tokenizer.model_input_names}
+
+            with torch.no_grad():
+                pool_embed = bert_model(**bert_inputs)[0]
+                word_embeddings = pool_embed.detach().cpu()[:, 0]
+
+                # I added this line of code:
+                pooled_embeddings_list.append(word_embeddings)
+
+            # folder_dataset.write(batch_num, word_embeddings)
+
+        # Concatenate the pooled embeddings from all batches
+        pooled_embeddings = torch.cat(pooled_embeddings_list, dim=0)
+
+        ### -- I created this, saving the model -- ###
+        if not os.path.exists(cache_dir):
+            print(
+                f"""cache dir does not exist, creating it cache_dir={
+                  cache_dir} """
+            )
+            os.mkdir(cache_dir)
+
+        # Concatenate the pooled embeddings from all batches
+        torch.save(pooled_embeddings.detach(), f"{embed_path}/{embed_file_name}")
+        ### -- /END I created this, saving the model -- ###
+
+        folder_dataset.save()
+        print("-" * 40)
+        print("# Finished BertEmbeddings wrapper.")
+        print("-" * 40)
+
+        return pooled_embeddings, np.array(labels)
+
+    return wrapper
+
+
 # def BertEmbeddings(func: Callable[[str, bool], tuple[ListDataset, np.ndarray]]):
 #     """Convert text data into pooled embeddings with DistilBERT model.
 
