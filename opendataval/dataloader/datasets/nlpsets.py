@@ -212,6 +212,8 @@ def BertEmbeddingsForSentenceTuple(
         for batch_num, batch in enumerate(tqdm(batched(dataset, n=batch_size))):
             t1, t2 = batch[0], batch[1]
 
+            print("Batch size", len(t1), len(t2))
+
             bert_inputs = tokenizer.__call__(
                 t1,
                 t2,
