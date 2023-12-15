@@ -186,9 +186,9 @@ class DVRL(DataEvaluator, ModelMixin):
 
         for x_batch, y_batch, y_hat_batch in tqdm.tqdm(dataloader):
             # Moves tensors to actual device
-            x_batch_ve = x_batch.to(device=self.device)
-            y_batch_ve = y_batch.to(device=self.device)
-            y_hat_batch_ve = y_hat_batch.to(device=self.device)
+            x_batch_ve = x_batch.to(device="cpu") # self.device)
+            y_batch_ve = y_batch.to(device="cpu") # self.device)
+            y_hat_batch_ve = y_hat_batch.to(device="cpu") # self.device)
 
             optimizer.zero_grad()
             print("The batches",x_batch_ve, y_batch_ve, y_hat_batch_ve )
@@ -196,6 +196,7 @@ class DVRL(DataEvaluator, ModelMixin):
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
             print("Above Selecting the bernoulli torch?", pred_dataval, gen)
+
             # Samples the selection probability
             select_prob = torch.bernoulli(pred_dataval, generator=gen)
             print("Below the selected prob", select_prob)
