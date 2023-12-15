@@ -252,11 +252,15 @@ class ExperimentMediator:
         for data_val in data_evaluators:
             try:
                 start_time = time.perf_counter()
+
+                print("Above the self.data_evaluators")
                 self.data_evaluators.append(
                     data_val.train(
                         self.fetcher, self.pred_model, self.metric, *args, **kwargs
                     )
                 )
+
+                print("below the self.data_evaluators")
 
                 end_time = time.perf_counter()
                 delta = timedelta(seconds=end_time - start_time)
