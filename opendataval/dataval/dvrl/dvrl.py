@@ -403,6 +403,9 @@ class DataValueEstimatorRL(nn.Module):
 
         print("after concat", out.isnan().any())
         out = self.mlp(out)
+
+        print("after mlp", out.isnan().any())
+
         out = torch.cat((out, y_hat), dim=1)
 
         print("after concat y_hat", out.isnan().any())
