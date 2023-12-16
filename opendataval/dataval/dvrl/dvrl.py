@@ -401,7 +401,7 @@ class DataValueEstimatorRL(nn.Module):
 
         pprint({"x": x, "y": y, "y_hat": y_hat})
 
-        pprint("x": len(x), "y": len(y), "y_hat": len(y_hat))
+        pprint({"x": len(x), "y": len(y), "y_hat": len(y_hat)})
 
         out = torch.concat((x, y), dim=1)
 
