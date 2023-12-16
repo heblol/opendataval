@@ -65,6 +65,7 @@ def BertEmbeddings(
         if os.path.exists(Path(f"{embed_path}/{embed_file_name}")):
             print(f"# Found Cached dataset!", embed_path)
             nlp_embeddings = torch.load(f"{embed_path}/{embed_file_name}")
+            print("After loading the NLP embeddings?")
             return nlp_embeddings, labels
             # return FolderDataset.load(embed_path), labels
 
