@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from re import L
 from typing import Optional
 
 import numpy as np
@@ -406,6 +407,10 @@ class DataValueEstimatorRL(nn.Module):
         out = torch.concat((x, y), dim=1)
 
         print("after concat", out.isnan().any())
+        for param in self.mlp.parameters():
+            if param.isnan():
+                raise ValueError("Found NAN value in parameter", param.isnan().sum() param)
+
         out = self.mlp(out)
 
         print("after mlp", out.isnan().any())
