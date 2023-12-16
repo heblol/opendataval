@@ -397,12 +397,19 @@ class DataValueEstimatorRL(nn.Module):
         y = y.flatten(start_dim=1)
         y_hat = y_hat.flatten(start_dim=1)
 
-        print("x, y, y_hat", x, y, y_hat)
+        print("x, y, y_hat", x.isnan().any(), y.isnan().any(), y_hat.isnan().any())
 
         out = torch.concat((x, y), dim=1)
+
+        print("after concat", out.isnan().any())
         out = self.mlp(out)
         out = torch.cat((out, y_hat), dim=1)
-        out = self.yhat_comb(out)
+
+        print("after concat y_hat", out.isnan().any())
+        out: torch.Tensor = self.yhat_comb(out)
+
+        if out.isnan().sum() > 0:
+            raise Exception(f"Forward pass contains a NaN value: #{out.isnan().sum()}")
 
         print("this is out", out)
         return out
