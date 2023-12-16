@@ -193,7 +193,12 @@ class DVRL(DataEvaluator, ModelMixin):
             y_hat_batch_ve: torch.Tensor = y_hat_batch  # .to(self.device)
 
             optimizer.zero_grad()
-            print("The batches", x_batch_ve.isnan().sum(), y_batch_ve.isnan().sum(), y_hat_batch_ve.isnan().sum())
+            print(
+                "The batches",
+                x_batch_ve.isnan().sum(),
+                y_batch_ve.isnan().sum(),
+                y_hat_batch_ve.isnan().sum(),
+            )
 
             # Generates selection probability
             pred_dataval = self.value_estimator(x_batch_ve, y_batch_ve, y_hat_batch_ve)
@@ -385,15 +390,21 @@ class DataValueEstimatorRL(nn.Module):
         torch.Tensor
             Selection probabilities per covariate data point
         """
+        print("Apply the forward pass?")
+
         # Flattens input dimension in case it is more than 2D
         x = x.flatten(start_dim=1)
         y = y.flatten(start_dim=1)
         y_hat = y_hat.flatten(start_dim=1)
 
+        print("x, y, y_hat", x, y, y_hat)
+
         out = torch.concat((x, y), dim=1)
         out = self.mlp(out)
         out = torch.cat((out, y_hat), dim=1)
         out = self.yhat_comb(out)
+
+        print("this is out", out)
         return out
 
 
