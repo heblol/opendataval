@@ -15,6 +15,7 @@ from opendataval.dataloader.util import CatDataset
 from opendataval.dataval.api import DataEvaluator, ModelMixin
 from pprint import pprint
 
+
 class DVRL(DataEvaluator, ModelMixin):
     """Data valuation using reinforcement learning class, implemented with PyTorch.
 
@@ -398,18 +399,17 @@ class DataValueEstimatorRL(nn.Module):
         y = y.flatten(start_dim=1)
         y_hat = y_hat.flatten(start_dim=1)
 
-        pprint({
-            "x": x,
-            'y':y,
-            "y_hat": y_hat
-        })
+        pprint({"x": x, "y": y, "y_hat": y_hat})
 
         out = torch.concat((x, y), dim=1)
 
         print("after concat", out.isnan().any())
         for param in self.mlp.parameters():
+            print("PARAM:", param)
             if param.isnan():
-                raise ValueError("Found NAN value in parameter", param.isnan().sum(), param)
+                raise ValueError(
+                    "Found NAN value in parameter", param.isnan().sum(), param
+                )
 
         out = self.mlp(out)
 
