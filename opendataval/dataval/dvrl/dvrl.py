@@ -401,6 +401,8 @@ class DataValueEstimatorRL(nn.Module):
 
         pprint({"x": x, "y": y, "y_hat": y_hat})
 
+        pprint("x": len(x), "y": len(y), "y_hat": len(y_hat))
+
         out = torch.concat((x, y), dim=1)
 
         print("after concat", out.isnan().any())
@@ -410,6 +412,8 @@ class DataValueEstimatorRL(nn.Module):
                 raise ValueError(
                     "Found NAN value in parameter", param.isnan().sum(), param
                 )
+        else:
+            print("NO NAN VALUE IN PARAMETER!")
 
         out = self.mlp(out)
 
