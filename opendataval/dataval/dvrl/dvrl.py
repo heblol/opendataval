@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, RandomSampler
 
 from opendataval.dataloader.util import CatDataset
 from opendataval.dataval.api import DataEvaluator, ModelMixin
-
+from pprint import pprint
 
 class DVRL(DataEvaluator, ModelMixin):
     """Data valuation using reinforcement learning class, implemented with PyTorch.
@@ -397,7 +397,11 @@ class DataValueEstimatorRL(nn.Module):
         y = y.flatten(start_dim=1)
         y_hat = y_hat.flatten(start_dim=1)
 
-        print("x, y, y_hat", x.isnan().any(), y.isnan().any(), y_hat.isnan().any())
+        pprint({
+            "x": x,
+            'y':y,
+            "y_hat": y_hat
+        })
 
         out = torch.concat((x, y), dim=1)
 
