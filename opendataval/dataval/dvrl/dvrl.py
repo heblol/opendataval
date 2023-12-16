@@ -409,7 +409,7 @@ class DataValueEstimatorRL(nn.Module):
         print("after concat", out.isnan().any())
         for param in self.mlp.parameters():
             if param.isnan():
-                raise ValueError("Found NAN value in parameter", param.isnan().sum() param)
+                raise ValueError("Found NAN value in parameter", param.isnan().sum(), param)
 
         out = self.mlp(out)
 
