@@ -392,42 +392,21 @@ class DataValueEstimatorRL(nn.Module):
         torch.Tensor
             Selection probabilities per covariate data point
         """
-        print("Apply the forward pass?")
 
         # Flattens input dimension in case it is more than 2D
         x = x.flatten(start_dim=1)
         y = y.flatten(start_dim=1)
         y_hat = y_hat.flatten(start_dim=1)
-
-        pprint({"x": x, "y": y, "y_hat": y_hat})
-
-        pprint({"x": len(x), "y": len(y), "y_hat": len(y_hat)})
-
         out = torch.concat((x, y), dim=1)
-
-        print("after concat", out.isnan().any())
-        for param in self.mlp.parameters():
-            print("PARAM:", param)
-            if param.isnan().any():
-                raise ValueError(
-                    "Found NAN value in parameter", param.isnan().sum(), param
-                )
-        else:
-            print("NO NAN VALUE IN PARAMETER!")
-
         out = self.mlp(out)
-
-        print("after mlp", out.isnan().any())
-
         out = torch.cat((out, y_hat), dim=1)
-
-        print("after concat y_hat", out.isnan().any())
         out: torch.Tensor = self.yhat_comb(out)
 
         if out.isnan().sum() > 0:
-            raise Exception(f"Forward pass contains a NaN value: #{out.isnan().sum()}")
+            raise Exception(
+                f"Forward pass contains a NaN value: This might be caused by having a validation size of 0."
+            )
 
-        print("this is out", out)
         return out
 
 
