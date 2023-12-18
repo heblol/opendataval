@@ -442,18 +442,15 @@ class DataFetcher:
         print("LENGTH train_indices", len(train_indices))
         print("LENGTH valid_indices", len(valid_indices))
         print("LENGTH test_indices", len(test_indices))
+        print("LENGTH covar", len(self.covar))
 
         idx = chain(train_indices, valid_indices, test_indices)
         seen = set()
         for index in idx:
             if not (0 <= index < len(self.covar)):
-                raise ValueError(
-                    f"""{index=} is out of range for {self.num_points=}"""
-                )
+                raise ValueError(f"""{index=} is out of range for {self.num_points=}""")
             if index in seen:
-                raise ValueError(
-                    f"""{index=} is repeated"""
-                )
+                raise ValueError(f"""{index=} is repeated""")
             seen.add(index)
 
         if isinstance(self.covar, Dataset):
