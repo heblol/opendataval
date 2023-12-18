@@ -437,6 +437,12 @@ class DataFetcher:
         valid_indices = [] if valid_indices is None else valid_indices
         test_indices = [] if test_indices is None else test_indices
 
+        print("Inside fetcher")
+
+        print("LENGTH train_indices", len(train_indices))
+        print("LENGTH valid_indices", len(valid_indices))
+        print("LENGTH test_indices", len(test_indices))
+
         idx = chain(train_indices, valid_indices, test_indices)
         seen = set()
         for index in idx:
