@@ -446,7 +446,7 @@ class DataFetcher:
 
         idx = chain(train_indices, valid_indices, test_indices)
         # Calculate the length of the indx
-        print("LENGTH idx", len(list(idx)))
+        print("LENGTH idx", len(list(idx)), idx)
 
         seen = set()
         for index in idx:
