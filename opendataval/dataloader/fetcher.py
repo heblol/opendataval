@@ -445,11 +445,6 @@ class DataFetcher:
         print("LENGTH covar", len(self.covar))
 
         idx = chain(train_indices, valid_indices, test_indices)
-        # Calculate the length of the indx
-        print("LENGTH idx", len(list(idx)))
-
-        # Get the first element of idx
-        print("FIRST ELEMENT", idx[0])
 
         seen = set()
         for index in idx:
