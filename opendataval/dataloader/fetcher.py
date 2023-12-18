@@ -449,7 +449,7 @@ class DataFetcher:
         print("LENGTH idx", len(list(idx)))
 
         # Get the first element of idx
-        print("FIRST ELEMENT", next(iter(idx)))
+        print("FIRST ELEMENT", idx[0])
 
         seen = set()
         for index in idx:
