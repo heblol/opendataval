@@ -446,10 +446,13 @@ class DataFetcher:
         idx = chain(train_indices, valid_indices, test_indices)
         seen = set()
         for index in idx:
-            if not (0 <= index < len(self.covar)) or index in seen:
+            if not (0 <= index < len(self.covar)):
                 raise ValueError(
-                    f"""{index=} is repeated or is out of range for {
-                        self.num_points=}"""
+                    f"""{index=} is out of range for {self.num_points=}"""
+                )
+            if index in seen:
+                raise ValueError(
+                    f"""{index=} is repeated"""
                 )
             seen.add(index)
 
