@@ -338,7 +338,6 @@ class ClassifierSkLearnWrapper(Model):
                 weights = np.squeeze(weights[0])
                 self.model.fit(x_train, y_train, *args, sample_weight=weights, **kwargs)
             else:
-                print("Y VALUES", pd.DataFrame(y_train).value_counts())
                 self.model.fit(x_train, y_train, *args, sample_weight=None, **kwargs)
 
         return self

@@ -112,7 +112,9 @@ class ShapEvaluator(DataEvaluator, ModelMixin, ABC):
 
     def train_data_values(self, *args, **kwargs):
         """Uses sampler to trains model to find marginal contribs and data values."""
+        print("we are now calculating train_data_values")
         self.marg_contrib = self.sampler.compute_marginal_contribution(*args, **kwargs)
+        print("calculated marginal contribution")
         return self
 
     def _evaluate_model(self, subset: list[int], *args, **kwargs):
