@@ -116,12 +116,14 @@ class DataEvaluator(ABC, ReprMixin):
         self : object
             Returns a Data Evaluator.
         """
+        print("setup input_fetcher (above)")
         self.input_fetcher(fetcher)
-
+        print("setup input_fetcher (below)")
         if isinstance(self, ModelMixin):
             if metric is None:
                 metric = accuracy if fetcher.one_hot else neg_mse
             self.input_model(pred_model).input_metric(metric)
+        print("setup complete")
         return self
 
     def train(
