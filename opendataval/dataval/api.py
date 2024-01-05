@@ -198,7 +198,9 @@ class DataEvaluator(ABC, ReprMixin):
 
     def input_fetcher(self, fetcher: DataFetcher):
         """Input data from a DataFetcher object. Alternative way of adding data."""
+        print("getting datapoints?")
         x_train, y_train, x_valid, y_valid, *_ = fetcher.datapoints
+        print("Got datapoints", len(x_train), len(y_train), len(x_valid), len(y_valid))
         return self.input_data(x_train, y_train, x_valid, y_valid)
 
 
