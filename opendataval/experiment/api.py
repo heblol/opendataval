@@ -411,7 +411,7 @@ class ExperimentMediator:
             df_resp = df_resp.explode(list(df_resp.columns))
         except ValueError:
             raise ValueError(
-                "Cannot explode df_res, probably because the number of elements should be multiplied by 0.05, without remainder."
+                f"Cannot explode df_res, probably because the number of elements should be multiplied by 0.05, without remainder. len={len(df_resp)}"
             )
 
         if save_output:
