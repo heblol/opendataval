@@ -3,6 +3,7 @@
 Uses HuggingFace
 `transformers <https://huggingface.co/docs/transformers/index>`_. as dependency.
 """
+
 from multiprocessing import pool
 import os
 from pathlib import Path
@@ -44,7 +45,13 @@ def BertEmbeddings(
     ) -> tuple[torch.Tensor, np.ndarray]:
         from transformers import DistilBertModel, DistilBertTokenizerFast
 
-        BERT_PRETRAINED_NAME = "distilbert-base-uncased"  # TODO update this
+        BERT_PRETRAINED_NAME = (
+            "SetFit/distilbert-base-uncased__enron_spam__all-train"  # TODO update this
+        )
+
+        print(
+            "NOW USING SetFit/distilbert-base-uncased__enron_spam__all-train PRETRAINED"
+        )
 
         force_download = True
 
@@ -73,9 +80,7 @@ def BertEmbeddings(
         device = torch.device(
             "cuda"
             if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
+            else "mps" if torch.backends.mps.is_available() else "cpu"
         )
 
         tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
@@ -191,9 +196,7 @@ def BertEmbeddingsForSentenceTuple(
         device = torch.device(
             "cuda"
             if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
+            else "mps" if torch.backends.mps.is_available() else "cpu"
         )
 
         tokenizer = DistilBertTokenizerFast.from_pretrained(BERT_PRETRAINED_NAME)
